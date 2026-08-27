@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: pulserelay
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn pulserelay.backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ENVIRONMENT
+        value: production
