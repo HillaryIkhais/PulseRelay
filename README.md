@@ -1,292 +1,85 @@
 # PulseRelay
 
-**Hands-free AI agent for paramedic patient transport**
+**Paramedics talk. PulseRelay listens, remembers, and hands it off.**
 
-PulseRelay listens to paramedic observations during ambulance transport, converts them into structured clinical events, maintains a deterministic live patient state, detects changes and missing information, asks for clarification when uncertain, proactively surfaces important state changes, and prepares a structured handoff for the receiving hospital.
+---
 
-## Architecture
+Every year, millions of patients are transported by ambulance. During those critical minutes, paramedics are doing two jobs at once: keeping the patient alive *and* trying to document everything the hospital needs to know. They're calling out vitals, administering medications, noting changes — and hoping someone is writing it down correctly.
 
-```
-                  PARAMEDIC
-                      │
-                      │ voice/text
-                      ▼
-              ┌───────────────┐
-              │ Audio / Input │
-              └───────┬───────┘
-                      │
-                      ▼
-             ┌─────────────────┐
-             │ Gemini (ADK)    │
-             │ extraction      │
-             └────────┬────────┘
-                      │
-                      ▼
-             ┌─────────────────┐
-             │ Event Validator │
-             │ + confidence    │
-             └────────┬────────┘
-                      │
-                      ▼
-             ┌─────────────────┐
-             │ Patient State   │
-             │ Store           │
-             └────────┬────────┘
-                      │
-              ┌───────┴────────┐
-              ▼                ▼
-       Trend Engine       Completeness
-              │                │
-              └───────┬────────┘
-                      ▼
-             ┌─────────────────┐
-             │ Agent Decision  │
-             └────────┬────────┘
-                      │
-             ┌────────┴─────────┐
-             ▼                  ▼
-       Ask paramedic       Proactive alert
-             │                  │
-             └────────┬─────────┘
-                      ▼
-             ┌─────────────────┐
-             │ Handoff Agent   │
-             └────────┬────────┘
-                      ▼
-              Receiving Hospital
-```
+PulseRelay changes that. It listens to what the paramedic says, extracts the clinical data in real time, tracks the patient's condition throughout transport, and hands the receiving hospital a complete, structured summary — all without the paramedic ever touching a keyboard.
 
-## Safety Architecture
+## What It Does
 
-**Critical design decision**: Gemini is NOT the source of truth for clinical state.
+A paramedic speaks naturally into a microphone:
 
-| Component | Responsibility |
-|-----------|---------------|
-| **Gemini (ADK)** | Natural language understanding, extraction, clarification, reasoning over state |
-| **Deterministic Code** | Storing patient state, validating vital-sign formats, timestamps, calculating trends, detecting missing values, confidence handling, state transitions |
+> "Patient is a 64-year-old male with chest pain. BP 104 over 67, heart rate 108, pain seven out of ten."
 
-This separation ensures:
-- No hallucinated clinical values
-- Deterministic trend calculations
-- Reliable confidence tracking
-- Audit-safe state management
+PulseRelay instantly:
 
-## Tech Stack
+1. **Extracts** the structured data: age 64, male, chest pain, BP 104/67, HR 108, pain 7/10
+2. **Records** it with timestamps and confidence levels
+3. **Monitors** for changes — if blood pressure drops or heart rate spikes, it alerts
+4. **Asks** when something is unclear: "BP ninety-two over..." → *"I captured systolic 92, but the diastolic is unclear. Can you repeat?"*
+5. **Prepares** a complete handoff summary for the receiving hospital
 
-- **Python** - Backend language
-- **FastAPI** - REST API framework
-- **Google ADK** - Agent orchestration framework
-- **Google Gemini** - Natural language extraction (via ADK)
-- **Cloud Run** - Serverless deployment
-- **Firestore** - Patient/session state persistence
-- **Pub/Sub** - Event-driven observation processing
+No buttons. No screens. Just talk.
 
-## GCP Services Used
+## Why It Matters
 
-| Service | Purpose |
-|---------|---------|
-| **Cloud Run** | Hosts the application API and frontend |
-| **Firestore** | Persists patient state and session data |
-| **Pub/Sub** | Event-driven observation processing pipeline |
-| **Vertex AI/Gemini** | Clinical text extraction via ADK |
-| **Cloud Build** | Builds Docker images for deployment |
+In an ambulance, seconds count. Every moment a paramedic spends typing into a computer is a moment they're not watching the patient. PulseRelay lets them stay focused on care while building an accurate, complete clinical record in the background.
 
-## Project Structure
+When they arrive at the hospital, instead of fumbling through handwritten notes, they hand over a structured summary: initial vs. latest vitals, medications given, trend analysis, and anything that needs clinician review.
+
+## How It Works
 
 ```
-pulserelay/
-├── backend/
-│   ├── agent/          # Agent orchestration
-│   │   ├── root_agent.py
-│   │   ├── extraction_agent.py
-│   │   ├── monitoring_agent.py
-│   │   ├── handoff_agent.py
-│   │   └── adk_agent.py      # ADK integration
-│   ├── state/          # Deterministic state management
-│   │   ├── models.py
-│   │   ├── store.py           # In-memory store (local)
-│   │   ├── firestore_store.py # Firestore store (cloud)
-│   │   ├── event_processor.py
-│   │   └── trends.py
-│   ├── safety/         # Validation and confidence
-│   │   ├── validation.py
-│   │   ├── confidence.py
-│   │   └── rules.py
-│   ├── api/            # REST endpoints
-│   │   └── routes.py
-│   ├── config.py       # Environment configuration
-│   ├── pubsub.py       # Pub/Sub integration
-│   └── main.py
-├── frontend/           # Operational dashboard
-│   └── index.html
-├── tests/              # Test suite
-│   └── test_core.py
-├── infrastructure/     # Cloud deployment
-│   └── cloudrun/
-├── demo.py             # Demo simulation
-├── deploy.sh           # Deployment script
-├── Dockerfile
-└── requirements.txt
+Paramedic speaks
+       ↓
+  Gemini 3.5 Flash extracts clinical data
+       ↓
+  Deterministic code validates & stores
+       ↓
+  Agent detects trends, asks for clarification
+       ↓
+  Handoff summary generated for hospital
 ```
 
-## Quick Start (Local)
+**The critical design choice**: Gemini handles understanding language. Deterministic Python code handles everything else — storing values, validating ranges, calculating trends, tracking confidence. This means no hallucinated vitals, no invented medications, no AI-written clinical notes. The AI understands; the code decides.
+
+## Demo Walkthrough
+
+A 64-year-old male with chest pain during transport:
+
+| Scene | Paramedic Says | PulseRelay Does |
+|-------|---------------|-----------------|
+| 1 | "BP 104 over 67, HR 108, pain 7" | Records initial vitals and demographics |
+| 2 | "Aspirin 324mg given" | Logs medication with timestamp |
+| 3 | "BP 98 over 61, HR 116, pain 8" | Detects changes, sends proactive alert |
+| 4 | "BP ninety-two over..." | Asks for clarification (incomplete data) |
+| 5 | "92 over 58" | Updates state, calculates trends |
+| 6 | "Two minutes out" | Generates complete handoff summary |
+
+## Run It
 
 ```bash
-# Install dependencies
 pip install -r requirements.txt
-
-# Run demo simulation
-python demo.py
-
-# Start server
-uvicorn pulserelay.backend.main:app --host 0.0.0.0 --port 8081
-
-# Open dashboard
-open http://localhost:8081
+uvicorn pulserelay.backend.main:app --port 8081
+# Open http://localhost:8081
 ```
 
-## Deployment to Google Cloud
+Click buttons 1–6 to walk through the full scenario. Or press the mic button and speak naturally.
 
-### Prerequisites
+## Built With
 
-1. Google Cloud account with billing enabled
-2. GCP project ID (e.g., `pulserelay-506715`)
-3. Docker installed locally
-4. gcloud CLI installed and authenticated
+- **Google Gemini 3.5 Flash** — Clinical text extraction
+- **Google ADK** — Agent orchestration
+- **FastAPI** — Backend API
+- **Cloud Run / Firestore / Pub/Sub** — Google Cloud infrastructure
 
-### One-Command Deployment
+## What It Doesn't Do
 
-```bash
-# Authenticate with GCP
-gcloud auth login
+PulseRelay does not diagnose. It does not recommend treatment. It does not make medical decisions. It documents what the paramedic observes and says — accurately, completely, and in real time. Clinical decisions remain with clinicians.
 
-# Set project
-gcloud config set project pulserelay-506715
+---
 
-# Run deployment script
-./deploy.sh
-```
-
-### Manual Deployment
-
-```bash
-# 1. Enable required APIs
-gcloud services enable run.googleapis.com firestore.googleapis.com pubsub.googleapis.com aiplatform.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
-
-# 2. Create Firestore database
-gcloud firestore databases create --location=us-central1
-
-# 3. Create Pub/Sub resources
-gcloud pubsub topics create pulse-observations
-gcloud pubsub subscriptions create pulse-observations-sub --topic=pulse-observations
-
-# 4. Build and push Docker image
-docker build -t gcr.io/pulserelay-506715/pulserelay:latest .
-docker push gcr.io/pulserelay-506715/pulserelay:latest
-
-# 5. Deploy to Cloud Run
-gcloud run deploy pulserelay \
-    --image=gcr.io/pulserelay-506715/pulserelay:latest \
-    --region=us-central1 \
-    --platform=managed \
-    --allow-unauthenticated \
-    --set-env-vars="ENVIRONMENT=production,GCP_PROJECT_ID=pulserelay-506715"
-```
-
-### Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `ENVIRONMENT` | `development` or `production` | `development` |
-| `GCP_PROJECT_ID` | Google Cloud project ID | `pulserelay-506715` |
-| `GEMINI_MODEL` | Gemini model to use | `gemini-3.5-flash` |
-| `GEMINI_API_KEY` | Gemini API key (if not using ADC) | - |
-
-## API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Health check for Cloud Run |
-| `/api/session/start` | POST | Start new patient session |
-| `/api/observe` | POST | Submit observation text |
-| `/api/state/{session_id}` | GET | Get current patient state |
-| `/api/trends/{session_id}` | GET | Get vital sign trends |
-| `/api/handoff/{session_id}` | GET | Generate handoff summary |
-| `/api/handoff/{session_id}/text` | GET | Get formatted handoff text |
-
-## Firestore Schema
-
-**Collection: `sessions`**
-```
-{
-  "session_id": "string",
-  "patient_id": "string",
-  "demographics": {
-    "age": "number",
-    "sex": "string",
-    "weight": "number",
-    "allergies": ["string"],
-    "medical_history": ["string"]
-  },
-  "chief_complaint": "string",
-  "vitals": [...],
-  "blood_pressures": [...],
-  "heart_rates": [...],
-  "pain_levels": [...],
-  "medications": [...],
-  "interventions": [...],
-  "timeline": [...],
-  "pending_information": [...],
-  "alerts": [...],
-  "created_at": "timestamp",
-  "updated_at": "timestamp",
-  "is_transport_active": "boolean"
-}
-```
-
-## Pub/Sub Configuration
-
-**Topic: `pulse-observations`**
-- Receives observation events from the API
-- Message format: `{session_id, text, extraction_result, timestamp}`
-
-**Subscription: `pulse-observations-sub`**
-- Ack deadline: 60 seconds
-- Processes observations asynchronously
-
-## Demo Scenario
-
-A 64-year-old male transported for chest pain:
-
-1. **Scene 1**: Initial assessment - BP 104/67, HR 108, Pain 7/10
-2. **Scene 2**: Aspirin 324mg administered
-3. **Scene 3**: Condition changes - BP 98/61, HR 116, Pain 8/10
-4. **Scene 4**: Incomplete BP reading - system asks for clarification
-5. **Scene 5**: Clarification provided - BP 92/58
-6. **Scene 6**: Handoff request - transport summary generated
-
-## Features
-
-- **Voice input** - Browser microphone with Web Speech API
-- **Natural language extraction** - Supports paramedic speech patterns
-- **Word number support** - "ninety-two", "seventeen", etc.
-- **Deterministic state management** - Never relies on LLM for clinical values
-- **Incomplete data handling** - Asks for clarification when observations are partial
-- **Trend detection** - Identifies significant vital sign changes
-- **Proactive alerts** - Surfaces important state changes without diagnosis
-- **Receiving team view** - Second dashboard for hospital staff
-- **Structured handoff** - Generates complete transport summary
-
-## Testing
-
-```bash
-# Run all tests
-python tests/test_core.py
-
-# Run demo
-python demo.py
-```
-
-## License
-
-MIT
+*Built for the All Things Agentic Hackathon. MIT License.*
