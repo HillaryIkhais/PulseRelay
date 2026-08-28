@@ -983,24 +983,53 @@
             border-left: 1px solid var(--border);
         }
 
-        .demo-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: transparent;
-            color: var(--text-muted);
-            font-size: 12px;
-            font-weight: 600;
+        .play-demo-btn {
+            padding: 10px 20px;
+            border-radius: 10px;
+            border: 2px solid var(--accent-green);
+            background: rgba(34, 197, 94, 0.1);
+            color: var(--accent-green);
+            font-size: 13px;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.2s;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .demo-btn:hover {
-            border-color: var(--blue);
-            color: var(--blue);
-            background: var(--glow-blue);
+        .play-demo-btn:hover {
+            background: rgba(34, 197, 94, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .play-demo-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .play-demo-btn.playing {
+            border-color: var(--accent-yellow);
+            color: var(--accent-yellow);
+            background: rgba(234, 179, 8, 0.1);
+        }
+
+        .play-demo-btn .play-icon {
+            width: 0;
+            height: 0;
+            border-left: 8px solid currentColor;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+
+        .play-demo-btn.playing .play-icon {
+            width: 8px;
+            height: 10px;
+            border: none;
+            border-left: 2px solid currentColor;
+            border-right: 2px solid currentColor;
         }
 
         .action-btn {
@@ -1567,12 +1596,12 @@
                    autocomplete="off">
             <button class="send-btn" id="send-btn" onclick="sendObservation()">Send</button>
             <div class="demo-controls">
-                <button class="demo-btn" onclick="loadDemoScene(1)">1</button>
-                <button class="demo-btn" onclick="loadDemoScene(2)">2</button>
-                <button class="demo-btn" onclick="loadDemoScene(3)">3</button>
-                <button class="demo-btn" onclick="loadDemoScene(4)">4</button>
-                <button class="demo-btn" onclick="loadDemoScene(5)">5</button>
-                <button class="demo-btn" onclick="loadDemoScene(6)">6</button>
+                <button class="play-demo-btn" id="play-demo-btn" onclick="playDemo()">
+                    <span class="play-icon"></span>
+                    <span id="play-demo-text">Play Demo</span>
+                </button>
+                <button class="action-btn" onclick="openHandoff()">Handoff</button>
+                <button class="action-btn danger" onclick="resetSession()">Reset</button>
             </div>
             <button class="action-btn" onclick="openHandoff()">Handoff</button>
             <button class="action-btn danger" onclick="resetSession()">Reset</button>
@@ -1747,9 +1776,63 @@
             sendBtn.textContent = 'Send';
         }
 
-        function loadDemoScene(sceneNum) {
-            document.getElementById('input-field').value = demoScenes[sceneNum];
-            sendObservation();
+        // ── Play Demo (voice simulation) ───────────────────
+        let demoPlaying = false;
+        let demoTimeout = null;
+
+        async function playDemo() {
+            if (demoPlaying) {
+                // Stop
+                demoPlaying = false;
+                clearTimeout(demoTimeout);
+                const btn = document.getElementById('play-demo-btn');
+                btn.classList.remove('playing');
+                document.getElementById('play-demo-text').textContent = 'Play Demo';
+                return;
+            }
+
+            demoPlaying = true;
+            const btn = document.getElementById('play-demo-btn');
+            btn.classList.add('playing');
+            document.getElementById('play-demo-text').textContent = 'Playing...';
+
+            const scenes = [1, 2, 3, 4, 5, 6];
+            const delays = [2000, 2500, 3000, 3500, 2500, 2000];
+
+            for (let i = 0; i < scenes.length; i++) {
+                if (!demoPlaying) break;
+
+                const sceneNum = scenes[i];
+                const input = document.getElementById('input-field');
+                const text = demoScenes[sceneNum];
+
+                // Simulate voice: show mic active, type text character by character
+                document.getElementById('voice-btn').classList.add('listening');
+
+                // Type out the text like speech recognition
+                input.value = '';
+                for (let c = 0; c < text.length; c++) {
+                    if (!demoPlaying) break;
+                    input.value += text[c];
+                    await new Promise(r => setTimeout(r, 25));
+                }
+
+                // Keep mic active for a moment
+                await new Promise(r => setTimeout(r, 300));
+
+                // Stop mic, send
+                document.getElementById('voice-btn').classList.remove('listening');
+                await sendObservation();
+
+                // Wait before next scene
+                if (i < scenes.length - 1 && demoPlaying) {
+                    await new Promise(r => setTimeout(r, delays[i]));
+                }
+            }
+
+            demoPlaying = false;
+            btn.classList.remove('playing');
+            document.getElementById('play-demo-text').textContent = 'Play Demo';
         }
 
         // ── Dashboard Updates ───────────────────────────────
