@@ -3,178 +3,129 @@
 ## System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          PULSERELAY SYSTEM                                   │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌──────────────┐                                                          │
-│  │   PARAMEDIC  │                                                          │
-│  │   (Voice/    │                                                          │
-│  │    Text)     │                                                          │
-│  └──────┬───────┘                                                          │
-│         │                                                                   │
-│         │ speech/text                                                       │
-│         ▼                                                                   │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                        INPUT LAYER                                    │  │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                  │  │
-│  │  │   Browser   │  │    REST     │  │   Voice     │                  │  │
-│  │  │  Microphone │  │    API      │  │   Input     │                  │  │
-│  │  │  (Web API)  │  │  /observe   │  │  (Future)   │                  │  │
-│  │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘                  │  │
-│  │         │                │                │                          │  │
-│  │         └────────────────┼────────────────┘                          │  │
-│  │                          │                                            │  │
-│  └──────────────────────────┼───────────────────────────────────────────┘  │
-│                             │                                               │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                     AGENT LAYER (ADK)                                 │  │
-│  │                                                                       │  │
-│  │  ┌─────────────────────────────────────────────────────────────────┐ │  │
-│  │  │                    Gemini 3.5 Flash                             │ │  │
-│  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │ │  │
-│  │  │  │  Extraction │  │  Reasoning  │  │   Safety    │            │ │  │
-│  │  │  │   Agent     │  │   Engine    │  │   Layer     │            │ │  │
-│  │  │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘            │ │  │
-│  │  │         │                │                │                     │ │  │
-│  │  └─────────┼────────────────┼────────────────┼─────────────────────┘ │  │
-│  │            │                │                │                        │  │
-│  │            ▼                ▼                ▼                        │  │
-│  │  ┌─────────────────────────────────────────────────────────────────┐ │  │
-│  │  │              Deterministic State Engine                         │ │  │
-│  │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │ │  │
-│  │  │  │   Event     │  │   Trend     │  │  Confidence │            │ │  │
-│  │  │  │ Processor   │  │   Engine    │  │  Calculator │            │ │  │
-│  │  │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘            │ │  │
-│  │  └─────────┼────────────────┼────────────────┼─────────────────────┘ │  │
-│  └────────────┼────────────────┼────────────────┼────────────────────────┘  │
-│               │                │                │                           │
-│               ▼                ▼                ▼                           │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                      STATE LAYER                                      │  │
-│  │                                                                       │  │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                  │  │
-│  │  │  In-Memory  │  │  Firestore  │  │    Pub/Sub  │                  │  │
-│  │  │   Store     │  │   (Cloud)   │  │   Events    │                  │  │
-│  │  │  (Local)    │  │             │  │             │                  │  │
-│  │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘                  │  │
-│  │         │                │                │                          │  │
-│  │         └────────────────┼────────────────┘                          │  │
-│  │                          │                                            │  │
-│  └──────────────────────────┼───────────────────────────────────────────┘  │
-│                             │                                               │
-│                             ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────┐  │
-│  │                      OUTPUT LAYER                                     │  │
-│  │                                                                       │  │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                  │  │
-│  │  │  Proactive  │  │  Handoff    │  │  Receiving  │                  │  │
-│  │  │   Alerts    │  │  Summary    │  │    Team     │                  │  │
-│  │  │             │  │             │  │    View     │                  │  │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘                  │  │
-│  │                                                                       │  │
-│  └──────────────────────────────────────────────────────────────────────┘  │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                        PULSERELAY                                │
+│            Clinical Transport Intelligence System                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │                    INPUT LAYER                            │   │
+│  │  Browser Microphone (Web Speech API)  │  REST API         │   │
+│  └──────────────────────────┬───────────────────────────────┘   │
+│                              │                                   │
+│  ┌──────────────────────────▼───────────────────────────────┐   │
+│  │                 AGENT LAYER (ADK)                         │   │
+│  │  ┌─────────────────────────────────────────────────┐     │   │
+│  │  │           Gemini 3.5 Flash                       │     │   │
+│  │  │  Extract: Vitals, Medications, Demographics      │     │   │
+│  │  └─────────────────────────────────────────────────┘     │   │
+│  └──────────────────────────┬───────────────────────────────┘   │
+│                              │                                   │
+│  ┌──────────────────────────▼───────────────────────────────┐   │
+│  │              DETERMINISTIC STATE ENGINE                    │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐               │   │
+│  │  │  Event   │  │  Trend   │  │Confidence│               │   │
+│  │  │Processor │  │  Engine  │  │Calculator│               │   │
+│  │  └──────────┘  └──────────┘  └──────────┘               │   │
+│  └──────────────────────────┬───────────────────────────────┘   │
+│                              │                                   │
+│  ┌──────────────────────────▼───────────────────────────────┐   │
+│  │                   STATE LAYER                             │   │
+│  │  In-Memory Store │ Firestore (Cloud) │ Pub/Sub Events    │   │
+│  └──────────────────────────┬───────────────────────────────┘   │
+│                              │                                   │
+│  ┌──────────────────────────▼───────────────────────────────┐   │
+│  │                  OUTPUT LAYER                             │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐               │   │
+│  │  │Proactive │  │  Ask for │  │ Handoff  │               │   │
+│  │  │  Alert   │  │Clarify   │  │ Summary  │               │   │
+│  │  └──────────┘  └──────────┘  └──────────┘               │   │
+│  └──────────────────────────────────────────────────────────┘   │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ## Data Flow
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                         OBSERVATION FLOW                                     │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  "BP 92 over..."                                                           │
-│       │                                                                     │
-│       ▼                                                                     │
-│  ┌─────────────┐                                                           │
-│  │   Gemini    │ ← Extracts: BP systolic = 92                              │
-│  │  (ADK)      │   Detects: diastolic missing                              │
-│  └──────┬──────┘                                                           │
-│         │                                                                   │
-│         ▼                                                                   │
-│  ┌─────────────┐                                                           │
-│  │  Validator  │ ← Validates: systolic in range (40-300)                   │
-│  │             │   Flags: confidence = LOW                                  │
-│  └──────┬──────┘                                                           │
-│         │                                                                   │
-│         ▼                                                                   │
-│  ┌─────────────┐                                                           │
-│  │   State     │ ← Stores: BP = 92/? (incomplete)                         │
-│  │   Store     │   Adds: pending_information item                          │
-│  └──────┬──────┘                                                           │
-│         │                                                                   │
-│         ▼                                                                   │
-│  ┌─────────────┐                                                           │
-│  │   Agent     │ ← Evaluates: incomplete vital detected                    │
-│  │  Decision   │   Action: ASK for clarification                          │
-│  └──────┬──────┘                                                           │
-│         │                                                                   │
-│         ▼                                                                   │
-│  "I captured systolic 92, but the diastolic value is unclear.              │
-│   Can you repeat the full blood pressure?"                                  │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+Paramedic: "BP ninety-two over..."
+         │
+         ▼
+    Gemini 3.5 Flash
+    Extracts: BP systolic = 92
+    Detects: diastolic missing
+         │
+         ▼
+    Validator
+    Flags: confidence = LOW
+    Triggers: ask_for_clarification
+         │
+         ▼
+    Agent Decision
+    Action: ASK
+    Message: "I captured systolic 92, but the diastolic
+              is unclear. Can you repeat?"
+         │
+         ▼
+    Banner appears in UI (yellow)
 ```
-
-## Key Components
-
-### 1. Input Layer
-- **Browser Microphone**: Web Speech API for voice input
-- **REST API**: `/api/observe` endpoint for text input
-- **Natural Language**: Supports paramedic speech patterns
-
-### 2. Agent Layer (Google ADK)
-- **Gemini 2.0 Flash**: Clinical text extraction
-- **Extraction Agent**: Parses vital signs, medications, demographics
-- **Safety Layer**: Validates values, detects incomplete data
-
-### 3. Deterministic State Engine
-- **Event Processor**: Regex + validation for vital signs
-- **Trend Engine**: Calculates BP, HR, pain changes
-- **Confidence Calculator**: Tracks data certainty
-
-### 4. State Layer
-- **In-Memory Store**: Local development
-- **Firestore**: Cloud persistence (when billing enabled)
-- **Pub/Sub**: Event-driven processing (when billing enabled)
-
-### 5. Output Layer
-- **Proactive Alerts**: Surfaces significant changes
-- **Handoff Summary**: Structured transport documentation
-- **Receiving Team View**: Real-time hospital dashboard
-
-## GCP Integration Points
-
-| Component | Google Service | Status |
-|-----------|---------------|--------|
-| Agent Orchestration | Google ADK | Ready |
-| Text Extraction | Gemini 2.0 Flash | Ready |
-| State Persistence | Firestore | Code written, needs billing |
-| Event Processing | Pub/Sub | Code written, needs billing |
-| Deployment | Cloud Run | Config ready, needs billing |
 
 ## Safety Architecture
 
 **Critical**: Gemini is NEVER the source of truth for clinical state.
 
 ```
-Gemini (LLM)          Deterministic Code
-     │                        │
-     │ extracts               │ validates
-     │                        │
-     ▼                        ▼
-┌─────────┐            ┌─────────┐
-│ "BP 92" │ ────────►  │ BP: 92/?│
-│         │            │ conf: LOW│
-└─────────┘            │ pending: TRUE│
-                       └─────────┘
+Gemini (LLM)              Deterministic Code
+     │                          │
+     │ extracts                 │ validates
+     │                          │
+     ▼                          ▼
+┌─────────┐              ┌─────────┐
+│ "BP 92" │ ──────────►  │ BP: 92/?│
+│         │              │ conf: LOW│
+└─────────┘              │ pending:│
+                         │  TRUE   │
+                         └─────────┘
 ```
 
-This ensures:
-- No hallucinated clinical values
-- Deterministic trend calculations
-- Reliable confidence tracking
-- Audit-safe state management
+## Google Cloud Services
+
+| Service | Role | Implementation |
+|---------|------|----------------|
+| **Gemini 3.5 Flash** | Clinical text extraction | `extraction_agent.py` via ADK |
+| **Google ADK** | Agent orchestration | `adk_agent.py` — LlmAgent + FunctionTool |
+| **Cloud Run** | Application hosting | `Dockerfile` + `infrastructure/cloudrun/service.yaml` |
+| **Firestore** | Patient state persistence | `state/firestore_store.py` |
+| **Pub/Sub** | Event-driven processing | `pubsub.py` |
+
+## Project Structure
+
+```
+pulserelay/
+├── backend/
+│   ├── agent/              # Agent orchestration
+│   │   ├── root_agent.py       # Main coordinator
+│   │   ├── extraction_agent.py # Gemini extraction
+│   │   ├── monitoring_agent.py # Proactive alerts
+│   │   ├── handoff_agent.py    # Summary generation
+│   │   └── adk_agent.py        # ADK integration
+│   ├── state/              # Deterministic state
+│   │   ├── models.py           # PatientState dataclass
+│   │   ├── store.py            # In-memory store
+│   │   ├── firestore_store.py  # Firestore store
+│   │   ├── event_processor.py  # Regex + validation
+│   │   └── trends.py           # Trend calculation
+│   ├── safety/             # Validation
+│   │   ├── rules.py            # Safety rules
+│   │   ├── validation.py       # Vital validation
+│   │   └── confidence.py       # Confidence calc
+│   ├── api/routes.py       # REST endpoints
+│   ├── config.py           # Environment config
+│   ├── pubsub.py           # Pub/Sub integration
+│   └── main.py             # FastAPI app
+├── frontend/index.html     # Dashboard UI
+├── tests/test_core.py      # 17 passing tests
+├── Dockerfile              # Container config
+├── deploy.sh               # GCP deployment
+└── requirements.txt        # Dependencies
+```
