@@ -3,282 +3,375 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PulseRelay — Clinical Transport Intelligence</title>
+    <title>PulseRelay — Live Transport</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            --bg: #f8f9fc;
-            --bg-white: #ffffff;
-            --bg-subtle: #f1f3f8;
-            --bg-muted: #e8ecf3;
-            --border: #e2e6ef;
-            --border-light: #eef1f6;
-            --text: #1a1f2e;
-            --text-secondary: #5a6178;
-            --text-muted: #8b91a8;
-            --blue: #2563eb;
-            --blue-light: #eff4ff;
-            --blue-dark: #1d4ed8;
-            --green: #16a34a;
-            --green-light: #f0fdf4;
-            --red: #dc2626;
-            --red-light: #fef2f2;
-            --yellow: #d97706;
-            --yellow-light: #fffbeb;
-            --purple: #7c3aed;
-            --purple-light: #f5f3ff;
-            --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -2px rgba(0,0,0,0.05);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.04);
-            --radius: 12px;
-            --radius-lg: 16px;
-            --transition: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+            --bg: #06080d;
+            --bg-elevated: #0c1018;
+            --bg-card: rgba(12, 16, 26, 0.7);
+            --bg-glass: rgba(12, 16, 26, 0.45);
+            --border: rgba(255, 255, 255, 0.06);
+            --border-focus: rgba(99, 179, 237, 0.4);
+            --text: #e8ecf4;
+            --text-secondary: #7a8599;
+            --text-muted: #4a5568;
+            --blue: #63b3ed;
+            --green: #48bb78;
+            --red: #fc8181;
+            --yellow: #f6e05e;
+            --purple: #b794f4;
+            --cyan: #76e4f7;
+            --glow-blue: rgba(99, 179, 237, 0.15);
+            --glow-green: rgba(72, 187, 120, 0.15);
+            --glow-red: rgba(252, 129, 129, 0.15);
+            --glow-yellow: rgba(246, 224, 94, 0.12);
+            --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Inter', -apple-system, sans-serif;
             background: var(--bg);
             color: var(--text);
             min-height: 100vh;
+            overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
-            line-height: 1.5;
         }
 
-        /* ── Top Bar ──────────────────────────────────────── */
-        .topbar {
-            background: var(--bg-white);
-            border-bottom: 1px solid var(--border);
-            padding: 0 32px;
-            height: 64px;
+        /* ── Animated Background ──────────────────────────── */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.07;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-glow-1 {
+            top: -200px;
+            left: -100px;
+            background: var(--blue);
+            animation: drift 20s ease-in-out infinite;
+        }
+
+        .bg-glow-2 {
+            bottom: -200px;
+            right: -100px;
+            background: var(--purple);
+            animation: drift 25s ease-in-out infinite reverse;
+        }
+
+        @keyframes drift {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(80px, 40px); }
+        }
+
+        /* ── Scanline Effect ──────────────────────────────── */
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--blue), transparent);
+            opacity: 0.3;
+            animation: scanline 4s linear infinite;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        @keyframes scanline {
+            0% { top: 0; }
+            100% { top: 100vh; }
+        }
+
+        /* ── EKG Line ─────────────────────────────────────── */
+        .ekg-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.15;
+        }
+
+        .ekg-line {
+            position: absolute;
+            bottom: 20px;
+            left: -100%;
+            width: 200%;
+            height: 2px;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent 0px,
+                transparent 40px,
+                var(--green) 40px,
+                var(--green) 42px
+            );
+            animation: ekg-scroll 8s linear infinite;
+        }
+
+        .ekg-line::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: -8px;
+            height: 18px;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent 0px,
+                transparent 95px,
+                var(--green) 100px,
+                transparent 102px,
+                transparent 105px,
+                var(--green) 110px,
+                transparent 112px,
+                transparent 115px
+            );
+            mask: linear-gradient(90deg, transparent, white 10%, white 90%, transparent);
+            -webkit-mask: linear-gradient(90deg, transparent, white 10%, white 90%, transparent);
+        }
+
+        @keyframes ekg-scroll {
+            from { transform: translateX(0); }
+            to { transform: translateX(50%); }
+        }
+
+        /* ── Layout ───────────────────────────────────────── */
+        .app {
+            position: relative;
+            z-index: 1;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            min-height: 100vh;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ── Header ───────────────────────────────────────── */
+        .header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: var(--shadow-sm);
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+            animation: fadeDown 0.6s var(--ease-out) both;
         }
 
-        .topbar-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .logo {
+        .header-brand {
             display: flex;
             align-items: center;
-            gap: 10px;
-            text-decoration: none;
+            gap: 14px;
         }
 
         .logo-mark {
-            width: 36px;
-            height: 36px;
-            background: var(--blue);
-            border-radius: 10px;
+            position: relative;
+            width: 42px;
+            height: 42px;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
         }
 
-        .logo-mark::after {
-            content: '';
+        .logo-ring {
             position: absolute;
-            inset: -3px;
-            border: 2px solid rgba(37, 99, 235, 0.15);
-            border-radius: 13px;
+            inset: 0;
+            border: 2px solid var(--blue);
+            border-radius: 50%;
+            animation: logoPulse 2s ease-in-out infinite;
         }
 
-        .logo-mark svg {
-            width: 20px;
-            height: 20px;
-            color: white;
+        .logo-ring:nth-child(2) {
+            inset: -4px;
+            border-color: rgba(99, 179, 237, 0.3);
+            animation-delay: 0.5s;
         }
 
-        .logo-text {
-            display: flex;
-            flex-direction: column;
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.08); opacity: 0.6; }
         }
 
-        .logo-name {
-            font-size: 16px;
+        .logo-icon {
+            font-size: 18px;
+            font-weight: 800;
+            color: var(--blue);
+            letter-spacing: -1px;
+            z-index: 1;
+        }
+
+        .brand-text h1 {
+            font-size: 17px;
             font-weight: 700;
             letter-spacing: -0.3px;
-            line-height: 1.1;
+            line-height: 1;
         }
 
-        .logo-tagline {
-            font-size: 10px;
-            font-weight: 600;
+        .brand-text span {
+            font-size: 11px;
             color: var(--text-muted);
+            font-weight: 500;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 2px;
         }
 
-        .topbar-divider {
-            width: 1px;
-            height: 32px;
-            background: var(--border);
-        }
-
-        .topbar-status {
+        .header-status {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 6px 12px;
-            background: var(--green-light);
-            border: 1px solid rgba(22, 163, 74, 0.15);
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--green);
-        }
-
-        .status-dot {
-            width: 7px;
-            height: 7px;
-            background: var(--green);
-            border-radius: 50%;
-            position: relative;
-        }
-
-        .status-dot::after {
-            content: '';
-            position: absolute;
-            inset: -3px;
-            border: 2px solid rgba(22, 163, 74, 0.2);
-            border-radius: 50%;
-            animation: statusPulse 2s ease-in-out infinite;
-        }
-
-        @keyframes statusPulse {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.4); opacity: 0; }
-        }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            gap: 20px;
         }
 
         .session-chip {
             display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: var(--bg-subtle);
+            gap: 8px;
+            padding: 6px 14px;
+            background: var(--bg-glass);
             border: 1px solid var(--border);
-            border-radius: 8px;
+            border-radius: 20px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
-            font-weight: 500;
             color: var(--text-secondary);
+            backdrop-filter: blur(12px);
         }
 
-        .session-label {
-            font-family: 'Inter', sans-serif;
-            font-weight: 600;
-            color: var(--text-muted);
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+        .live-dot {
+            width: 7px;
+            height: 7px;
+            background: var(--green);
+            border-radius: 50%;
+            animation: livePulse 1.5s ease-in-out infinite;
         }
 
-        /* ── Navigation Tabs ──────────────────────────────── */
-        .nav-tabs {
+        @keyframes livePulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.5); }
+            50% { box-shadow: 0 0 0 6px rgba(72, 187, 120, 0); }
+        }
+
+        .transport-badge {
             display: flex;
-            gap: 0;
-            padding: 0 32px;
-            background: var(--bg-white);
-            border-bottom: 1px solid var(--border);
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: var(--glow-green);
+            color: var(--green);
+            border: 1px solid rgba(72, 187, 120, 0.2);
         }
 
-        .nav-tab {
-            padding: 14px 20px;
+        /* ── Tab Bar ──────────────────────────────────────── */
+        .tab-bar {
+            display: flex;
+            gap: 2px;
+            padding: 4px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin: 20px 0;
+            backdrop-filter: blur(12px);
+            width: fit-content;
+            animation: fadeUp 0.6s var(--ease-out) 0.1s both;
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tab-btn {
+            padding: 10px 24px;
             border: none;
-            background: none;
+            border-radius: 10px;
+            background: transparent;
             color: var(--text-muted);
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            transition: all var(--transition);
-            position: relative;
+            transition: all 0.3s var(--ease-out);
             font-family: inherit;
+            position: relative;
         }
 
-        .nav-tab::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: transparent;
-            transition: all var(--transition);
-        }
-
-        .nav-tab.active {
+        .tab-btn.active {
+            background: rgba(99, 179, 237, 0.12);
             color: var(--blue);
         }
 
-        .nav-tab.active::after {
-            background: var(--blue);
-        }
-
-        .nav-tab:hover:not(.active) {
+        .tab-btn:hover:not(.active) {
             color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.03);
         }
 
-        /* ── Main Layout ──────────────────────────────────── */
-        .main {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 24px 32px;
-        }
-
-        /* ── Alert Banner ─────────────────────────────────── */
-        .alert-banner {
-            display: none;
+        /* ── Agent Response Banner ────────────────────────── */
+        .agent-banner {
             padding: 14px 20px;
-            border-radius: var(--radius);
-            margin-bottom: 20px;
+            border-radius: 12px;
+            display: none;
             align-items: center;
-            gap: 12px;
-            animation: bannerIn 0.3s ease-out;
+            gap: 14px;
+            margin-bottom: 16px;
+            animation: slideReveal 0.5s var(--spring) both;
+            backdrop-filter: blur(16px);
         }
 
-        .alert-banner.visible {
+        .agent-banner.visible {
             display: flex;
         }
 
-        @keyframes bannerIn {
-            from { opacity: 0; transform: translateY(-8px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes slideReveal {
+            from { opacity: 0; transform: translateY(-12px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
-        .alert-banner.ask {
-            background: var(--yellow-light);
-            border: 1px solid rgba(217, 119, 6, 0.15);
+        .agent-banner.type-ask {
+            background: var(--glow-yellow);
+            border: 1px solid rgba(246, 224, 94, 0.2);
         }
 
-        .alert-banner.alert {
-            background: var(--red-light);
-            border: 1px solid rgba(220, 38, 38, 0.15);
+        .agent-banner.type-alert {
+            background: var(--glow-red);
+            border: 1px solid rgba(252, 129, 129, 0.2);
         }
 
-        .alert-banner.ack {
-            background: var(--green-light);
-            border: 1px solid rgba(22, 163, 74, 0.15);
+        .agent-banner.type-acknowledge {
+            background: var(--glow-green);
+            border: 1px solid rgba(72, 187, 120, 0.2);
         }
 
-        .alert-banner-icon {
+        .agent-banner-icon {
             width: 32px;
             height: 32px;
             border-radius: 8px;
@@ -289,52 +382,54 @@
             flex-shrink: 0;
         }
 
-        .alert-banner.ask .alert-banner-icon { background: rgba(217, 119, 6, 0.1); }
-        .alert-banner.alert .alert-banner-icon { background: rgba(220, 38, 38, 0.1); }
-        .alert-banner.ack .alert-banner-icon { background: rgba(22, 163, 74, 0.1); }
+        .type-ask .agent-banner-icon { background: rgba(246, 224, 94, 0.15); }
+        .type-alert .agent-banner-icon { background: rgba(252, 129, 129, 0.15); }
+        .type-acknowledge .agent-banner-icon { background: rgba(72, 187, 120, 0.15); }
 
-        .alert-banner-text {
-            flex: 1;
+        .agent-banner-text {
             font-size: 14px;
             font-weight: 500;
-            line-height: 1.4;
+            flex: 1;
+            line-height: 1.5;
         }
 
-        .alert-banner-close {
+        .agent-banner-close {
             background: none;
             border: none;
             color: var(--text-muted);
             cursor: pointer;
             padding: 4px;
-            font-size: 18px;
-            line-height: 1;
+            font-size: 16px;
             opacity: 0.5;
-            transition: opacity var(--transition);
+            transition: opacity 0.2s;
         }
 
-        .alert-banner-close:hover { opacity: 1; }
+        .agent-banner-close:hover { opacity: 1; }
 
-        /* ── Vitals Row ───────────────────────────────────── */
-        .vitals-row {
+        /* ── Content Grid ─────────────────────────────────── */
+        .content {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: 300px 1fr 320px;
             gap: 16px;
-            margin-bottom: 20px;
+            animation: fadeUp 0.6s var(--ease-out) 0.2s both;
+        }
+
+        /* ── Vitals Column ────────────────────────────────── */
+        .vitals-column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .vital-card {
-            background: var(--bg-white);
+            background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 20px;
-            transition: all var(--transition);
+            border-radius: 14px;
+            padding: 18px;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s var(--ease-out);
             position: relative;
             overflow: hidden;
-        }
-
-        .vital-card:hover {
-            box-shadow: var(--shadow-md);
-            transform: translateY(-1px);
         }
 
         .vital-card::before {
@@ -343,13 +438,18 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 3px;
+            height: 2px;
         }
 
-        .vital-card.bp::before { background: var(--blue); }
-        .vital-card.hr::before { background: var(--red); }
-        .vital-card.pain::before { background: var(--yellow); }
-        .vital-card.complaint::before { background: var(--purple); }
+        .vital-card:hover {
+            border-color: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .vital-card.bp::before { background: linear-gradient(90deg, var(--blue), transparent); }
+        .vital-card.hr::before { background: linear-gradient(90deg, var(--red), transparent); }
+        .vital-card.pain::before { background: linear-gradient(90deg, var(--yellow), transparent); }
+        .vital-card.complaint::before { background: linear-gradient(90deg, var(--purple), transparent); }
 
         .vital-header {
             display: flex;
@@ -359,71 +459,72 @@
         }
 
         .vital-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
+            font-size: 10px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
         }
 
-        .vital-status {
-            width: 8px;
-            height: 8px;
+        .vital-indicator {
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
+            animation: livePulse 1.5s ease-in-out infinite;
         }
 
-        .bp .vital-status { background: var(--blue); }
-        .hr .vital-status { background: var(--red); }
-        .pain .vital-status { background: var(--yellow); }
-        .complaint .vital-status { background: var(--purple); }
+        .bp .vital-indicator { background: var(--blue); }
+        .hr .vital-indicator { background: var(--red); }
+        .pain .vital-indicator { background: var(--yellow); }
+        .complaint .vital-indicator { background: var(--purple); }
 
-        .vital-value-row {
+        .vital-display {
             display: flex;
             align-items: baseline;
             gap: 6px;
         }
 
-        .vital-value {
-            font-size: 36px;
+        .vital-number {
+            font-size: 40px;
             font-weight: 800;
-            letter-spacing: -1.5px;
+            letter-spacing: -2px;
             font-variant-numeric: tabular-nums;
             line-height: 1;
-            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transition: all 0.4s var(--spring);
         }
 
-        .vital-value.flash {
-            animation: valueFlash 0.5s ease;
+        .vital-number.flash {
+            animation: vitalFlash 0.6s var(--spring);
         }
 
-        @keyframes valueFlash {
+        @keyframes vitalFlash {
             0% { transform: scale(1); }
-            30% { transform: scale(1.05); color: var(--blue); }
+            30% { transform: scale(1.08); color: var(--cyan); }
             100% { transform: scale(1); }
         }
 
-        .bp .vital-value { color: var(--blue); }
-        .hr .vital-value { color: var(--red); }
-        .pain .vital-value { color: var(--yellow); }
-        .complaint .vital-value { color: var(--purple); font-size: 16px; font-weight: 600; letter-spacing: 0; }
+        .bp .vital-number { color: var(--blue); }
+        .hr .vital-number { color: var(--red); }
+        .pain .vital-number { color: var(--yellow); }
+        .complaint .vital-number { color: var(--purple); font-size: 16px; letter-spacing: 0; font-weight: 600; }
 
         .vital-unit {
-            font-size: 14px;
+            font-size: 13px;
             color: var(--text-muted);
             font-weight: 500;
         }
 
-        .vital-footer {
+        .vital-meta {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid var(--border-light);
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
         }
 
         .vital-trend {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             display: flex;
             align-items: center;
@@ -435,68 +536,58 @@
         .vital-trend.stable { color: var(--green); }
 
         .vital-time {
-            font-size: 11px;
+            font-size: 10px;
             color: var(--text-muted);
             font-family: 'JetBrains Mono', monospace;
         }
 
-        /* ── Content Grid ─────────────────────────────────── */
-        .content-grid {
-            display: grid;
-            grid-template-columns: 1fr 380px;
-            gap: 20px;
-        }
-
-        /* ── Card Base ────────────────────────────────────── */
-        .card {
-            background: var(--bg-white);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-        }
-
-        .card-header {
+        /* ── Center Column ────────────────────────────────── */
+        .center-column {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 18px 22px;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .card-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--text);
-            letter-spacing: -0.2px;
-        }
-
-        .card-badge {
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 6px;
-        }
-
-        .card-body {
-            padding: 18px 22px;
-        }
-
-        /* ── Patient Info ─────────────────────────────────── */
-        .patient-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            flex-direction: column;
             gap: 12px;
         }
 
+        /* ── Patient Card ─────────────────────────────────── */
+        .patient-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            backdrop-filter: blur(12px);
+        }
+
+        .patient-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .patient-card-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+        }
+
+        .patient-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
         .patient-field {
-            padding: 12px 14px;
-            background: var(--bg-subtle);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
             border-radius: 10px;
+            padding: 12px;
         }
 
         .patient-field-label {
             font-size: 10px;
-            font-weight: 700;
+            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: var(--text-muted);
@@ -504,301 +595,392 @@
         }
 
         .patient-field-value {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
-            color: var(--text);
         }
 
         /* ── Timeline ─────────────────────────────────────── */
-        .timeline {
-            max-height: 420px;
-            overflow-y: auto;
+        .timeline-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            flex: 1;
+            backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
         }
 
-        .timeline::-webkit-scrollbar { width: 4px; }
-        .timeline::-webkit-scrollbar-track { background: transparent; }
-        .timeline::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .timeline-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+        }
+
+        .timeline-scroll {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 320px;
+            padding-right: 4px;
+        }
+
+        .timeline-scroll::-webkit-scrollbar { width: 3px; }
+        .timeline-scroll::-webkit-scrollbar-track { background: transparent; }
+        .timeline-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
         .timeline-entry {
             display: flex;
-            gap: 14px;
-            padding: 14px 22px;
-            border-bottom: 1px solid var(--border-light);
-            transition: background var(--transition);
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            animation: slideInLeft 0.4s var(--ease-out) both;
         }
 
-        .timeline-entry:hover {
-            background: var(--bg-subtle);
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-12px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         .timeline-entry:last-child { border-bottom: none; }
 
         .timeline-marker {
+            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 4px;
-            padding-top: 2px;
         }
 
         .timeline-dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             flex-shrink: 0;
-            border: 2px solid var(--bg-white);
-            box-shadow: 0 0 0 2px var(--border);
         }
 
-        .timeline-dot.vital { background: var(--blue); box-shadow: 0 0 0 2px var(--blue-light); }
-        .timeline-dot.medication { background: var(--green); box-shadow: 0 0 0 2px var(--green-light); }
-        .timeline-dot.demographic { background: var(--purple); box-shadow: 0 0 0 2px var(--purple-light); }
-        .timeline-dot.alert { background: var(--yellow); box-shadow: 0 0 0 2px var(--yellow-light); }
+        .timeline-dot.vital { background: var(--blue); box-shadow: 0 0 8px var(--glow-blue); }
+        .timeline-dot.medication { background: var(--green); box-shadow: 0 0 8px var(--glow-green); }
+        .timeline-dot.demographic { background: var(--purple); }
+        .timeline-dot.alert { background: var(--yellow); box-shadow: 0 0 8px var(--glow-yellow); }
 
         .timeline-line {
-            width: 2px;
+            width: 1px;
             flex: 1;
-            background: var(--border-light);
-            min-height: 20px;
+            background: var(--border);
+            min-height: 16px;
         }
 
         .timeline-content {
             flex: 1;
+            padding-bottom: 4px;
         }
 
-        .timeline-time {
-            font-size: 11px;
-            font-weight: 600;
+        .timeline-content-time {
+            font-size: 10px;
             color: var(--text-muted);
             font-family: 'JetBrains Mono', monospace;
         }
 
-        .timeline-text {
-            font-size: 14px;
+        .timeline-content-text {
+            font-size: 13px;
             font-weight: 500;
-            color: var(--text);
             margin-top: 2px;
+            line-height: 1.4;
         }
 
         .timeline-empty {
             text-align: center;
-            padding: 48px 24px;
             color: var(--text-muted);
-        }
-
-        .timeline-empty-icon {
-            font-size: 32px;
-            margin-bottom: 8px;
-            opacity: 0.5;
-        }
-
-        .timeline-empty-text {
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .timeline-empty-sub {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 4px;
+            padding: 40px 0;
+            font-size: 13px;
         }
 
         /* ── Right Column ─────────────────────────────────── */
         .right-column {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 12px;
         }
 
-        /* ── Alerts ───────────────────────────────────────── */
+        .alerts-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            backdrop-filter: blur(12px);
+        }
+
+        .alerts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+
+        .alerts-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+        }
+
+        .alerts-count {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+        }
+
         .alert-entry {
             display: flex;
             align-items: flex-start;
             gap: 10px;
-            padding: 12px 14px;
+            padding: 10px 12px;
             border-radius: 10px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
+            animation: alertSlide 0.4s var(--spring) both;
         }
 
-        .alert-entry:last-child { margin-bottom: 0; }
+        @keyframes alertSlide {
+            from { opacity: 0; transform: translateX(8px) scale(0.96); }
+            to { opacity: 1; transform: translateX(0) scale(1); }
+        }
 
         .alert-entry.warning {
-            background: var(--yellow-light);
-            border: 1px solid rgba(217, 119, 6, 0.1);
+            background: var(--glow-yellow);
+            border: 1px solid rgba(246, 224, 94, 0.15);
         }
 
         .alert-entry.critical {
-            background: var(--red-light);
-            border: 1px solid rgba(220, 38, 38, 0.1);
+            background: var(--glow-red);
+            border: 1px solid rgba(252, 129, 129, 0.15);
         }
 
         .alert-entry.info {
-            background: var(--blue-light);
-            border: 1px solid rgba(37, 99, 235, 0.1);
+            background: var(--glow-blue);
+            border: 1px solid rgba(99, 179, 237, 0.15);
         }
 
-        .alert-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
-        .alert-text { font-size: 13px; font-weight: 500; line-height: 1.4; flex: 1; }
-        .alert-time { font-size: 10px; color: var(--text-muted); margin-top: 2px; font-family: 'JetBrains Mono', monospace; }
-
-        .empty-state {
-            text-align: center;
-            padding: 32px 16px;
-            color: var(--text-muted);
+        .alert-icon {
+            font-size: 14px;
+            flex-shrink: 0;
+            margin-top: 1px;
         }
 
-        .empty-state-icon {
-            font-size: 28px;
-            margin-bottom: 8px;
-            opacity: 0.4;
+        .alert-body {
+            flex: 1;
         }
 
-        .empty-state-text {
+        .alert-text {
             font-size: 13px;
             font-weight: 500;
-        }
-
-        /* ── Trends ───────────────────────────────────────── */
-        .trend-row {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .trend-row:last-child { border-bottom: none; }
-
-        .trend-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            width: 50px;
-            flex-shrink: 0;
-        }
-
-        .trend-arrow {
-            font-size: 14px;
-            width: 20px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-
-        .trend-arrow.up { color: var(--red); }
-        .trend-arrow.down { color: var(--blue); }
-        .trend-arrow.stable { color: var(--green); }
-
-        .trend-message {
-            font-size: 12px;
-            color: var(--text-secondary);
-            flex: 1;
             line-height: 1.4;
         }
 
-        /* ── Input Bar ────────────────────────────────────── */
-        .input-section {
-            margin-top: 20px;
+        .alert-time {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 3px;
+            font-family: 'JetBrains Mono', monospace;
         }
 
-        .input-bar {
-            background: var(--bg-white);
+        .no-alerts-msg {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 24px 0;
+            font-size: 13px;
+        }
+
+        /* ── Trend Sparklines ─────────────────────────────── */
+        .trends-card {
+            background: var(--bg-card);
             border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 6px;
+            border-radius: 14px;
+            padding: 20px;
+            backdrop-filter: blur(12px);
+            flex: 1;
+        }
+
+        .sparkline-row {
             display: flex;
             align-items: center;
-            gap: 4px;
-            box-shadow: var(--shadow);
-            transition: border-color var(--transition), box-shadow var(--transition);
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sparkline-row:last-child { border-bottom: none; }
+
+        .sparkline-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            width: 40px;
+            flex-shrink: 0;
+        }
+
+        .sparkline-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 28px;
+            flex: 1;
+        }
+
+        .sparkline-bar {
+            flex: 1;
+            border-radius: 2px 2px 0 0;
+            min-height: 3px;
+            transition: height 0.4s var(--spring);
+        }
+
+        .sparkline-bar.bp { background: var(--blue); opacity: 0.7; }
+        .sparkline-bar.hr { background: var(--red); opacity: 0.7; }
+        .sparkline-bar.pain { background: var(--yellow); opacity: 0.7; }
+
+        .sparkline-value {
+            font-size: 13px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            width: 48px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .sparkline-value.bp { color: var(--blue); }
+        .sparkline-value.hr { color: var(--red); }
+        .sparkline-value.pain { color: var(--yellow); }
+
+        /* ── Input Bar ────────────────────────────────────── */
+        .input-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin: 16px 0 24px;
+            backdrop-filter: blur(12px);
+            animation: fadeUp 0.6s var(--ease-out) 0.3s both;
+            transition: border-color 0.3s;
         }
 
         .input-bar:focus-within {
-            border-color: var(--blue);
-            box-shadow: var(--shadow-md), 0 0 0 3px rgba(37, 99, 235, 0.08);
+            border-color: var(--border-focus);
         }
 
         .mic-btn {
             width: 44px;
             height: 44px;
-            border-radius: 10px;
-            border: none;
-            background: var(--bg-subtle);
+            border-radius: 50%;
+            border: 1.5px solid var(--border);
+            background: rgba(255, 255, 255, 0.03);
             color: var(--text-muted);
+            font-size: 18px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all var(--transition);
+            transition: all 0.3s var(--spring);
             flex-shrink: 0;
         }
 
         .mic-btn:hover {
-            background: var(--blue-light);
+            border-color: var(--blue);
             color: var(--blue);
+            background: var(--glow-blue);
         }
 
         .mic-btn.listening {
-            background: var(--red-light);
+            border-color: var(--red);
             color: var(--red);
+            background: var(--glow-red);
             animation: micPulse 1s ease-in-out infinite;
         }
 
         @keyframes micPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.15); }
-            50% { box-shadow: 0 0 0 8px rgba(220, 38, 38, 0); }
+            0%, 100% { box-shadow: 0 0 0 0 rgba(252, 129, 129, 0.3); }
+            50% { box-shadow: 0 0 0 10px rgba(252, 129, 129, 0); }
         }
 
-        .mic-btn svg { width: 18px; height: 18px; }
+        .mic-btn svg {
+            width: 18px;
+            height: 18px;
+        }
 
         .input-field {
             flex: 1;
+            background: transparent;
             border: none;
-            background: none;
-            padding: 12px 8px;
+            color: var(--text);
             font-size: 14px;
             font-family: 'Inter', sans-serif;
-            color: var(--text);
             outline: none;
         }
 
-        .input-field::placeholder { color: var(--text-muted); }
+        .input-field::placeholder {
+            color: var(--text-muted);
+        }
 
-        .input-actions {
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        .voice-status {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-align: center;
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+
+        .voice-status.active {
+            color: var(--red);
         }
 
         .send-btn {
-            padding: 10px 20px;
+            padding: 10px 24px;
             border-radius: 10px;
             border: none;
             background: var(--blue);
-            color: white;
+            color: var(--bg);
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
-            transition: all var(--transition);
+            transition: all 0.2s var(--spring);
             font-family: inherit;
+            flex-shrink: 0;
         }
 
-        .send-btn:hover { background: var(--blue-dark); }
-        .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .send-btn:hover {
+            background: #7cc4f5;
+            transform: translateY(-1px);
+        }
 
-        .demo-row {
+        .send-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .demo-controls {
             display: flex;
-            align-items: center;
             gap: 6px;
-            margin-top: 10px;
-            justify-content: center;
-        }
-
-        .demo-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            align-items: center;
+            padding-left: 12px;
+            border-left: 1px solid var(--border);
         }
 
         .demo-btn {
@@ -806,95 +988,97 @@
             height: 32px;
             border-radius: 8px;
             border: 1px solid var(--border);
-            background: var(--bg-white);
-            color: var(--text-secondary);
+            background: transparent;
+            color: var(--text-muted);
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            transition: all var(--transition);
+            transition: all 0.2s;
             font-family: 'JetBrains Mono', monospace;
         }
 
         .demo-btn:hover {
             border-color: var(--blue);
             color: var(--blue);
-            background: var(--blue-light);
+            background: var(--glow-blue);
         }
 
         .action-btn {
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-radius: 8px;
             border: 1px solid var(--border);
-            background: var(--bg-white);
+            background: transparent;
             color: var(--text-secondary);
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            transition: all var(--transition);
+            transition: all 0.2s;
             font-family: inherit;
         }
 
         .action-btn:hover {
             border-color: var(--blue);
             color: var(--blue);
-            background: var(--blue-light);
+            background: var(--glow-blue);
         }
 
-        .action-btn.danger { color: var(--red); }
-        .action-btn.danger:hover { border-color: var(--red); background: var(--red-light); }
+        .action-btn.danger {
+            color: var(--red);
+        }
+
+        .action-btn.danger:hover {
+            border-color: var(--red);
+            background: var(--glow-red);
+        }
 
         .spinner {
             display: inline-block;
             width: 14px;
             height: 14px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top-color: white;
+            border: 2px solid var(--border);
+            border-top-color: var(--blue);
             border-radius: 50%;
-            animation: spin 0.6s linear infinite;
+            animation: spin 0.7s linear infinite;
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        .voice-hint {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-align: center;
-            margin-top: 8px;
-        }
 
         /* ── Handoff Modal ────────────────────────────────── */
         .modal-overlay {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(26, 31, 46, 0.5);
+            background: rgba(6, 8, 13, 0.85);
             z-index: 1000;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(8px);
         }
 
         .modal-overlay.active {
             display: flex;
-            animation: fadeIn 0.2s ease;
+            animation: fadeIn 0.25s var(--ease-out);
         }
 
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
 
         .modal {
-            background: var(--bg-white);
+            background: var(--bg-elevated);
             border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
+            border-radius: 18px;
             width: 90%;
-            max-width: 600px;
+            max-width: 640px;
             max-height: 85vh;
             overflow-y: auto;
-            box-shadow: var(--shadow-lg);
-            animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 32px 80px rgba(0, 0, 0, 0.5);
+            animation: modalIn 0.4s var(--spring);
         }
 
         @keyframes modalIn {
-            from { opacity: 0; transform: translateY(16px) scale(0.97); }
+            from { opacity: 0; transform: translateY(24px) scale(0.95); }
             to { opacity: 1; transform: translateY(0) scale(1); }
         }
 
@@ -904,19 +1088,20 @@
 
         .modal-header {
             padding: 20px 24px;
-            border-bottom: 1px solid var(--border-light);
+            border-bottom: 1px solid var(--border);
             display: flex;
             justify-content: space-between;
             align-items: center;
             position: sticky;
             top: 0;
-            background: var(--bg-white);
+            background: var(--bg-elevated);
             z-index: 1;
         }
 
         .modal-title {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
+            letter-spacing: -0.3px;
         }
 
         .modal-close {
@@ -927,24 +1112,31 @@
             cursor: pointer;
             padding: 4px 8px;
             border-radius: 6px;
-            transition: all var(--transition);
+            transition: all 0.2s;
         }
 
-        .modal-close:hover { background: var(--bg-subtle); color: var(--text); }
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text);
+        }
 
-        .modal-body { padding: 24px; }
+        .modal-body {
+            padding: 24px;
+        }
 
-        .handoff-section { margin-bottom: 20px; }
+        .handoff-section {
+            margin-bottom: 20px;
+        }
 
         .handoff-section-title {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
             color: var(--blue);
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             margin-bottom: 10px;
             padding-bottom: 8px;
-            border-bottom: 1px solid var(--border-light);
+            border-bottom: 1px solid var(--border);
         }
 
         .handoff-row {
@@ -954,10 +1146,18 @@
             font-size: 13px;
         }
 
-        .handoff-label { color: var(--text-secondary); }
-        .handoff-value { font-weight: 600; }
+        .handoff-label {
+            color: var(--text-secondary);
+        }
 
-        .handoff-list { list-style: none; padding: 0; }
+        .handoff-value {
+            font-weight: 600;
+        }
+
+        .handoff-list {
+            list-style: none;
+            padding: 0;
+        }
 
         .handoff-list li {
             padding: 5px 0;
@@ -977,10 +1177,10 @@
         }
 
         .handoff-alert {
-            background: var(--red-light);
-            border: 1px solid rgba(220, 38, 38, 0.1);
+            background: var(--glow-red);
+            border: 1px solid rgba(252, 129, 129, 0.15);
             border-radius: 10px;
-            padding: 14px;
+            padding: 12px;
             margin-top: 8px;
         }
 
@@ -1000,30 +1200,44 @@
         }
 
         /* ── Receiving View ───────────────────────────────── */
-        .receiving-view { display: none; }
-        .receiving-view.active { display: block; }
-        .transport-view.hidden { display: none; }
+        .receiving-view {
+            display: none;
+        }
+
+        .receiving-view.active {
+            display: block;
+            animation: fadeUp 0.4s var(--ease-out);
+        }
+
+        .transport-view.hidden {
+            display: none;
+        }
 
         .receiving-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 12px;
+        }
+
+        .receiving-grid .full-width {
+            grid-column: 1 / -1;
         }
 
         .handoff-ready-banner {
             grid-column: 1 / -1;
-            background: linear-gradient(135deg, var(--green-light), var(--blue-light));
-            border: 1px solid rgba(22, 163, 74, 0.15);
-            border-radius: var(--radius-lg);
-            padding: 40px;
+            background: linear-gradient(135deg, var(--glow-green), var(--glow-blue));
+            border: 1px solid rgba(72, 187, 120, 0.2);
+            border-radius: 14px;
+            padding: 32px;
             text-align: center;
+            animation: fadeUp 0.4s var(--ease-out);
         }
 
         .handoff-ready-banner h2 {
             font-size: 18px;
             font-weight: 700;
             color: var(--green);
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
 
         .handoff-ready-banner p {
@@ -1033,11 +1247,12 @@
 
         .observation-item {
             padding: 10px 14px;
-            background: var(--bg-subtle);
-            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
             border-left: 3px solid var(--blue);
             font-size: 13px;
             margin-bottom: 6px;
+            animation: slideInLeft 0.3s var(--ease-out) both;
         }
 
         .observation-item.trend { border-left-color: var(--yellow); }
@@ -1047,88 +1262,101 @@
             display: flex;
             justify-content: space-between;
             padding: 10px 0;
-            border-bottom: 1px solid var(--border-light);
+            border-bottom: 1px solid var(--border);
             font-size: 13px;
         }
 
         .intervention-item:last-child { border-bottom: none; }
 
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
-
         /* ── Responsive ───────────────────────────────────── */
-        @media (max-width: 1100px) {
-            .content-grid { grid-template-columns: 1fr; }
+        @media (max-width: 1200px) {
+            .content {
+                grid-template-columns: 1fr 1fr;
+            }
+            .vitals-column {
+                grid-column: 1 / -1;
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr 1fr;
+            }
         }
 
         @media (max-width: 768px) {
-            .topbar { padding: 0 16px; }
-            .main { padding: 16px; }
-            .vitals-row { grid-template-columns: 1fr 1fr; }
-            .patient-grid { grid-template-columns: 1fr 1fr; }
-            .receiving-grid { grid-template-columns: 1fr; }
+            .app { padding: 0 12px; }
+            .content {
+                grid-template-columns: 1fr;
+            }
+            .vitals-column {
+                grid-template-columns: 1fr 1fr;
+            }
+            .receiving-grid {
+                grid-template-columns: 1fr;
+            }
             .input-bar { flex-wrap: wrap; }
-            .demo-row { flex-wrap: wrap; }
+            .demo-controls { border-left: none; padding-left: 0; border-top: 1px solid var(--border); padding-top: 8px; width: 100%; justify-content: center; }
+            .header { flex-wrap: wrap; gap: 12px; }
         }
     </style>
 </head>
 <body>
-    <!-- Top Bar -->
-    <header class="topbar">
-        <div class="topbar-left">
-            <a href="/" class="logo">
+    <!-- Background Effects -->
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="scanline"></div>
+    <div class="ekg-container"><div class="ekg-line"></div></div>
+
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-brand">
                 <div class="logo-mark">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
-                    </svg>
+                    <div class="logo-ring"></div>
+                    <div class="logo-ring"></div>
+                    <span class="logo-icon">PR</span>
                 </div>
-                <div class="logo-text">
-                    <span class="logo-name">PulseRelay</span>
-                    <span class="logo-tagline">Clinical Transport Intelligence</span>
+                <div class="brand-text">
+                    <h1>PulseRelay</h1>
+                    <span>Live Transport</span>
                 </div>
-            </a>
-            <div class="topbar-divider"></div>
-            <div class="topbar-status">
-                <div class="status-dot"></div>
-                <span>Transport Active</span>
             </div>
-        </div>
-        <div class="topbar-right">
-            <div class="session-chip">
-                <span class="session-label">Session</span>
-                <span id="session-id">Connecting...</span>
+            <div class="header-status">
+                <div class="transport-badge" id="transport-badge">
+                    <span>●</span> Transport Active
+                </div>
+                <div class="session-chip">
+                    <div class="live-dot"></div>
+                    <span id="session-id">Connecting...</span>
+                </div>
             </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="tab-bar">
+            <button class="tab-btn active" onclick="switchView('transport')">Transport</button>
+            <button class="tab-btn" onclick="switchView('receiving')">Receiving Team</button>
         </div>
-    </header>
 
-    <!-- Navigation -->
-    <nav class="nav-tabs">
-        <button class="nav-tab active" onclick="switchView('transport')">Transport</button>
-        <button class="nav-tab" onclick="switchView('receiving')">Receiving Team</button>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="main">
-        <!-- Alert Banner -->
-        <div class="alert-banner" id="alert-banner">
-            <div class="alert-banner-icon" id="alert-banner-icon"></div>
-            <div class="alert-banner-text" id="alert-banner-text"></div>
-            <button class="alert-banner-close" onclick="hideBanner()">×</button>
+        <!-- Agent Banner -->
+        <div class="agent-banner" id="agent-banner">
+            <div class="agent-banner-icon" id="agent-banner-icon"></div>
+            <div class="agent-banner-text" id="agent-banner-text"></div>
+            <button class="agent-banner-close" onclick="hideAgentBanner()">✕</button>
         </div>
 
         <!-- Transport View -->
-        <div class="transport-view" id="transport-view">
-            <!-- Vitals -->
-            <div class="vitals-row">
+        <div class="content transport-view" id="transport-view">
+            <!-- Left: Vitals -->
+            <div class="vitals-column">
                 <div class="vital-card bp">
                     <div class="vital-header">
                         <span class="vital-label">Blood Pressure</span>
-                        <div class="vital-status"></div>
+                        <div class="vital-indicator"></div>
                     </div>
-                    <div class="vital-value-row">
-                        <span class="vital-value" id="vital-bp">—/—</span>
+                    <div class="vital-display">
+                        <span class="vital-number" id="vital-bp">—/—</span>
                         <span class="vital-unit">mmHg</span>
                     </div>
-                    <div class="vital-footer">
+                    <div class="vital-meta">
                         <span class="vital-trend" id="trend-bp"></span>
                         <span class="vital-time" id="time-bp"></span>
                     </div>
@@ -1137,13 +1365,13 @@
                 <div class="vital-card hr">
                     <div class="vital-header">
                         <span class="vital-label">Heart Rate</span>
-                        <div class="vital-status"></div>
+                        <div class="vital-indicator"></div>
                     </div>
-                    <div class="vital-value-row">
-                        <span class="vital-value" id="vital-hr">—</span>
+                    <div class="vital-display">
+                        <span class="vital-number" id="vital-hr">—</span>
                         <span class="vital-unit">bpm</span>
                     </div>
-                    <div class="vital-footer">
+                    <div class="vital-meta">
                         <span class="vital-trend" id="trend-hr"></span>
                         <span class="vital-time" id="time-hr"></span>
                     </div>
@@ -1152,12 +1380,12 @@
                 <div class="vital-card pain">
                     <div class="vital-header">
                         <span class="vital-label">Pain Level</span>
-                        <div class="vital-status"></div>
+                        <div class="vital-indicator"></div>
                     </div>
-                    <div class="vital-value-row">
-                        <span class="vital-value" id="vital-pain">—/10</span>
+                    <div class="vital-display">
+                        <span class="vital-number" id="vital-pain">—/10</span>
                     </div>
-                    <div class="vital-footer">
+                    <div class="vital-meta">
                         <span class="vital-trend" id="trend-pain"></span>
                         <span class="vital-time" id="time-pain"></span>
                     </div>
@@ -1166,109 +1394,86 @@
                 <div class="vital-card complaint">
                     <div class="vital-header">
                         <span class="vital-label">Chief Complaint</span>
-                        <div class="vital-status"></div>
+                        <div class="vital-indicator"></div>
                     </div>
-                    <div class="vital-value-row">
-                        <span class="vital-value" id="vital-complaint">—</span>
+                    <div class="vital-display">
+                        <span class="vital-number" id="vital-complaint">—</span>
                     </div>
-                    <div class="vital-footer">
+                    <div class="vital-meta">
                         <span></span>
                         <span class="vital-time" id="time-complaint"></span>
                     </div>
                 </div>
             </div>
 
-            <!-- Content Grid -->
-            <div class="content-grid">
-                <!-- Left Column -->
-                <div style="display: flex; flex-direction: column; gap: 20px;">
-                    <!-- Patient Info -->
-                    <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">Patient Overview</span>
-                        </div>
-                        <div class="card-body">
-                            <div class="patient-grid">
-                                <div class="patient-field">
-                                    <div class="patient-field-label">Demographics</div>
-                                    <div class="patient-field-value" id="patient-demo">—</div>
-                                </div>
-                                <div class="patient-field">
-                                    <div class="patient-field-label">Complaint</div>
-                                    <div class="patient-field-value" id="patient-complaint">—</div>
-                                </div>
-                                <div class="patient-field">
-                                    <div class="patient-field-label">Medications</div>
-                                    <div class="patient-field-value" id="patient-meds">0</div>
-                                </div>
-                                <div class="patient-field">
-                                    <div class="patient-field-label">Events</div>
-                                    <div class="patient-field-value" id="patient-events">0</div>
-                                </div>
-                                <div class="patient-field">
-                                    <div class="patient-field-label">Pending</div>
-                                    <div class="patient-field-value" id="patient-pending">0</div>
-                                </div>
-                                <div class="patient-field">
-                                    <div class="patient-field-label">Status</div>
-                                    <div class="patient-field-value" style="color: var(--green);">Active</div>
-                                </div>
-                            </div>
-                        </div>
+            <!-- Center: Patient + Timeline -->
+            <div class="center-column">
+                <div class="patient-card">
+                    <div class="patient-card-header">
+                        <span class="patient-card-title">Patient Overview</span>
                     </div>
-
-                    <!-- Timeline -->
-                    <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">Event Timeline</span>
+                    <div class="patient-grid">
+                        <div class="patient-field">
+                            <div class="patient-field-label">Demographics</div>
+                            <div class="patient-field-value" id="patient-demo">—</div>
                         </div>
-                        <div class="timeline" id="timeline">
-                            <div class="timeline-empty">
-                                <div class="timeline-empty-icon">📋</div>
-                                <div class="timeline-empty-text">No events recorded</div>
-                                <div class="timeline-empty-sub">Observations will appear here as they're captured</div>
-                            </div>
+                        <div class="patient-field">
+                            <div class="patient-field-label">Complaint</div>
+                            <div class="patient-field-value" id="patient-complaint">—</div>
+                        </div>
+                        <div class="patient-field">
+                            <div class="patient-field-label">Medications</div>
+                            <div class="patient-field-value" id="patient-meds">0</div>
+                        </div>
+                        <div class="patient-field">
+                            <div class="patient-field-label">Events</div>
+                            <div class="patient-field-value" id="patient-events">0</div>
+                        </div>
+                        <div class="patient-field">
+                            <div class="patient-field-label">Pending</div>
+                            <div class="patient-field-value" id="patient-pending">0</div>
+                        </div>
+                        <div class="patient-field">
+                            <div class="patient-field-label">Status</div>
+                            <div class="patient-field-value" id="patient-status" style="color: var(--green);">Active</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Right Column -->
-                <div class="right-column">
-                    <!-- Alerts -->
-                    <div class="card">
-                        <div class="card-header">
-                            <span class="card-title">Active Alerts</span>
-                            <span class="card-badge" id="alert-count" style="background: var(--bg-subtle); color: var(--text-muted);">0</span>
-                        </div>
-                        <div class="card-body">
-                            <div id="alerts">
-                                <div class="empty-state">
-                                    <div class="empty-state-icon">✓</div>
-                                    <div class="empty-state-text">No active alerts</div>
-                                </div>
-                            </div>
-                        </div>
+                <div class="timeline-card">
+                    <div class="timeline-header">
+                        <span class="timeline-title">Event Timeline</span>
                     </div>
+                    <div class="timeline-scroll" id="timeline">
+                        <div class="timeline-empty">No events recorded yet</div>
+                    </div>
+                </div>
+            </div>
 
-                    <!-- Trends -->
-                    <div class="card" style="flex: 1;">
-                        <div class="card-header">
-                            <span class="card-title">Vital Trends</span>
-                        </div>
-                        <div class="card-body">
-                            <div id="trends">
-                                <div class="empty-state">
-                                    <div class="empty-state-icon">📈</div>
-                                    <div class="empty-state-text">No trend data</div>
-                                </div>
-                            </div>
-                        </div>
+            <!-- Right: Alerts + Trends -->
+            <div class="right-column">
+                <div class="alerts-card">
+                    <div class="alerts-header">
+                        <span class="alerts-title">Active Alerts</span>
+                        <span class="alerts-count" id="alert-count">0</span>
+                    </div>
+                    <div id="alerts">
+                        <div class="no-alerts-msg">No active alerts</div>
+                    </div>
+                </div>
+
+                <div class="trends-card">
+                    <div class="alerts-header">
+                        <span class="alerts-title">Vital Trends</span>
+                    </div>
+                    <div id="trends">
+                        <div class="no-alerts-msg">No trend data</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Receiving View -->
+        <!-- Receiving Team View -->
         <div class="receiving-view" id="receiving-view">
             <div class="receiving-grid">
                 <div class="handoff-ready-banner" id="handoff-ready-banner">
@@ -1277,83 +1482,114 @@
                 </div>
 
                 <div class="vital-card bp">
-                    <div class="vital-header"><span class="vital-label">BP</span><div class="vital-status"></div></div>
-                    <div class="vital-value-row"><span class="vital-value" id="recv-bp">—/—</span><span class="vital-unit">mmHg</span></div>
-                </div>
-
-                <div class="vital-card hr">
-                    <div class="vital-header"><span class="vital-label">HR</span><div class="vital-status"></div></div>
-                    <div class="vital-value-row"><span class="vital-value" id="recv-hr">—</span><span class="vital-unit">bpm</span></div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header"><span class="card-title">Patient Info</span></div>
-                    <div class="card-body" style="display: flex; flex-direction: column; gap: 8px;">
-                        <div class="patient-field"><div class="patient-field-label">Demographics</div><div class="patient-field-value" id="recv-demo">—</div></div>
-                        <div class="patient-field"><div class="patient-field-label">Complaint</div><div class="patient-field-value" id="recv-complaint">—</div></div>
-                        <div class="patient-field"><div class="patient-field-label">ETA</div><div class="patient-field-value" id="recv-eta">—</div></div>
+                    <div class="vital-header">
+                        <span class="vital-label">BP</span>
+                        <div class="vital-indicator"></div>
+                    </div>
+                    <div class="vital-display">
+                        <span class="vital-number" id="recv-bp">—/—</span>
+                        <span class="vital-unit">mmHg</span>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header"><span class="card-title">Trends</span></div>
-                    <div class="card-body"><div id="recv-trends"><div class="empty-state"><div class="empty-state-text">No trend data</div></div></div></div>
+                <div class="vital-card hr">
+                    <div class="vital-header">
+                        <span class="vital-label">HR</span>
+                        <div class="vital-indicator"></div>
+                    </div>
+                    <div class="vital-display">
+                        <span class="vital-number" id="recv-hr">—</span>
+                        <span class="vital-unit">bpm</span>
+                    </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-header"><span class="card-title">Interventions</span></div>
-                    <div class="card-body"><div id="recv-interventions"><div class="empty-state"><div class="empty-state-text">No interventions</div></div></div></div>
+                <div class="patient-card">
+                    <div class="patient-card-header">
+                        <span class="patient-card-title">Patient Info</span>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div class="patient-field">
+                            <div class="patient-field-label">Demographics</div>
+                            <div class="patient-field-value" id="recv-demo">—</div>
+                        </div>
+                        <div class="patient-field">
+                            <div class="patient-field-label">Chief Complaint</div>
+                            <div class="patient-field-value" id="recv-complaint">—</div>
+                        </div>
+                        <div class="patient-field">
+                            <div class="patient-field-label">ETA</div>
+                            <div class="patient-field-value" id="recv-eta">—</div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="card" style="grid-column: 1 / -1;">
-                    <div class="card-header"><span class="card-title">Agent Observations</span></div>
-                    <div class="card-body"><div id="recv-observations"><div class="empty-state"><div class="empty-state-text">Awaiting data...</div></div></div></div>
+                <div class="alerts-card">
+                    <div class="alerts-header">
+                        <span class="alerts-title">Vital Trends</span>
+                    </div>
+                    <div id="recv-trends">
+                        <div class="no-alerts-msg">No trend data yet</div>
+                    </div>
+                </div>
+
+                <div class="alerts-card">
+                    <div class="alerts-header">
+                        <span class="alerts-title">Interventions</span>
+                    </div>
+                    <div id="recv-interventions">
+                        <div class="no-alerts-msg">No interventions recorded</div>
+                    </div>
+                </div>
+
+                <div class="alerts-card full-width">
+                    <div class="alerts-header">
+                        <span class="alerts-title">Agent Observations</span>
+                    </div>
+                    <div id="recv-observations">
+                        <div class="no-alerts-msg">Awaiting transport data...</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Input -->
-        <div class="input-section">
-            <div class="input-bar">
-                <button class="mic-btn" id="voice-btn" onclick="toggleVoice()" title="Press to speak">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                        <line x1="12" y1="19" x2="12" y2="23"/>
-                        <line x1="8" y1="23" x2="16" y2="23"/>
-                    </svg>
-                </button>
-                <input type="text" class="input-field" id="input-field"
-                       placeholder="Speak or type an observation — BP 104 over 67, HR 108, Pain 7/10..."
-                       autocomplete="off">
-                <div class="input-actions">
-                    <button class="send-btn" id="send-btn" onclick="sendObservation()">Send</button>
-                </div>
-            </div>
-            <div class="demo-row">
-                <span class="demo-label">Demo</span>
+        <!-- Input Bar -->
+        <div class="input-bar" style="position: relative;">
+            <button class="mic-btn" id="voice-btn" onclick="toggleVoice()" title="Press to speak">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                    <line x1="12" y1="19" x2="12" y2="23"/>
+                    <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+            </button>
+            <input type="text" class="input-field" id="input-field"
+                   placeholder="Speak or type: BP 104 over 67, HR 108, Pain 7/10..."
+                   autocomplete="off">
+            <button class="send-btn" id="send-btn" onclick="sendObservation()">Send</button>
+            <div class="demo-controls">
                 <button class="demo-btn" onclick="loadDemoScene(1)">1</button>
                 <button class="demo-btn" onclick="loadDemoScene(2)">2</button>
                 <button class="demo-btn" onclick="loadDemoScene(3)">3</button>
                 <button class="demo-btn" onclick="loadDemoScene(4)">4</button>
                 <button class="demo-btn" onclick="loadDemoScene(5)">5</button>
                 <button class="demo-btn" onclick="loadDemoScene(6)">6</button>
-                <span style="width: 1px; height: 20px; background: var(--border); margin: 0 4px;"></span>
-                <button class="action-btn" onclick="openHandoff()">Handoff</button>
-                <button class="action-btn danger" onclick="resetSession()">Reset</button>
             </div>
-            <div class="voice-hint">Press <strong>Ctrl+M</strong> to activate voice input</div>
+            <button class="action-btn" onclick="openHandoff()">Handoff</button>
+            <button class="action-btn danger" onclick="resetSession()">Reset</button>
+            <div class="voice-status" id="voice-status">Ctrl+M to speak</div>
         </div>
-    </main>
+    </div>
 
     <!-- Handoff Modal -->
     <div class="modal-overlay" id="handoff-modal">
         <div class="modal">
             <div class="modal-header">
                 <span class="modal-title">Transport Summary</span>
-                <button class="modal-close" onclick="closeHandoff()">×</button>
+                <button class="modal-close" onclick="closeHandoff()">✕</button>
             </div>
-            <div class="modal-body" id="handoff-content">Loading...</div>
+            <div class="modal-body" id="handoff-content">
+                Loading handoff...
+            </div>
         </div>
     </div>
 
@@ -1372,14 +1608,15 @@
             6: "We're two minutes out."
         };
 
-        // ── Speech ──────────────────────────────────────────
+        // ── Speech Recognition ──────────────────────────────
         function initSpeechRecognition() {
             if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                document.getElementById('voice-status').textContent = 'Speech not supported';
                 document.getElementById('voice-btn').disabled = true;
                 return;
             }
-            const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SR();
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
             recognition.continuous = false;
             recognition.interimResults = true;
             recognition.lang = 'en-US';
@@ -1387,32 +1624,48 @@
             recognition.onstart = () => {
                 isListening = true;
                 document.getElementById('voice-btn').classList.add('listening');
+                document.getElementById('voice-status').textContent = 'Listening...';
+                document.getElementById('voice-status').classList.add('active');
             };
 
-            recognition.onresult = (e) => {
-                let t = '';
-                for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript;
-                document.getElementById('input-field').value = t;
-                if (e.results[e.results.length - 1].isFinal) setTimeout(sendObservation, 300);
+            recognition.onresult = (event) => {
+                let transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
+                document.getElementById('input-field').value = transcript;
+                if (event.results[event.results.length - 1].isFinal) {
+                    setTimeout(() => sendObservation(), 300);
+                }
             };
 
-            recognition.onerror = () => stopListening();
+            recognition.onerror = (event) => {
+                stopListening();
+                document.getElementById('voice-status').textContent =
+                    event.error === 'not-allowed' ? 'Mic access denied' : 'Error: ' + event.error;
+            };
+
             recognition.onend = () => stopListening();
         }
 
         function toggleVoice() {
-            if (isListening) recognition.stop();
-            else try { recognition.start(); } catch(e) {}
+            if (isListening) {
+                recognition.stop();
+            } else {
+                try { recognition.start(); } catch (e) {}
+            }
         }
 
         function stopListening() {
             isListening = false;
             document.getElementById('voice-btn').classList.remove('listening');
+            document.getElementById('voice-status').textContent = 'Ctrl+M to speak';
+            document.getElementById('voice-status').classList.remove('active');
         }
 
-        // ── View ────────────────────────────────────────────
+        // ── View Switching ──────────────────────────────────
         function switchView(view) {
-            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             if (view === 'transport') {
                 document.getElementById('transport-view').classList.remove('hidden');
@@ -1424,259 +1677,331 @@
             }
         }
 
-        // ── Banner ──────────────────────────────────────────
-        function showBanner(type, msg) {
-            const b = document.getElementById('alert-banner');
-            b.className = 'alert-banner visible ' + type;
-            document.getElementById('alert-banner-icon').textContent = type === 'ask' ? '❓' : type === 'alert' ? '⚠️' : '✓';
-            document.getElementById('alert-banner-text').textContent = msg;
+        // ── Agent Banner ────────────────────────────────────
+        function showAgentBanner(type, message) {
+            const banner = document.getElementById('agent-banner');
+            const icon = document.getElementById('agent-banner-icon');
+            const text = document.getElementById('agent-banner-text');
+            banner.className = 'agent-banner visible type-' + type;
+            icon.textContent = type === 'ask' ? '❓' : type === 'alert' ? '⚠️' : '✓';
+            text.textContent = message;
         }
 
-        function hideBanner() {
-            document.getElementById('alert-banner').classList.remove('visible');
+        function hideAgentBanner() {
+            document.getElementById('agent-banner').classList.remove('visible');
         }
 
         // ── Init ────────────────────────────────────────────
         async function init() {
             try {
-                const r = await fetch(`${API_BASE}/session/start`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
-                const d = await r.json();
-                sessionId = d.session_id;
+                const res = await fetch(`${API_BASE}/session/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                const data = await res.json();
+                sessionId = data.session_id;
                 document.getElementById('session-id').textContent = sessionId.substring(0, 8);
                 initSpeechRecognition();
-            } catch(e) {
+            } catch (e) {
                 document.getElementById('session-id').textContent = 'Error';
             }
         }
 
-        // ── Send ────────────────────────────────────────────
+        // ── Send Observation ────────────────────────────────
         async function sendObservation() {
             const input = document.getElementById('input-field');
             const text = input.value.trim();
             if (!text || !sessionId) return;
             input.value = '';
-            const btn = document.getElementById('send-btn');
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span>';
+            const sendBtn = document.getElementById('send-btn');
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<span class="spinner"></span>';
 
             try {
-                const r = await fetch(`${API_BASE}/observe`, {
+                const res = await fetch(`${API_BASE}/observe`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ session_id: sessionId, text })
                 });
-                const result = await r.json();
+                const result = await res.json();
                 updateDashboard(result);
-                if (document.getElementById('receiving-view').classList.contains('active')) updateReceivingView();
-                if (result.monitoring && result.monitoring.message) {
-                    const a = result.monitoring.action;
-                    showBanner(a === 'ask' ? 'ask' : a === 'alert' ? 'alert' : 'ack', result.monitoring.message);
+                if (document.getElementById('receiving-view').classList.contains('active')) {
+                    updateReceivingView();
                 }
-            } catch(e) {
-                showBanner('alert', 'Connection error. Please try again.');
+                if (result.monitoring) {
+                    const action = result.monitoring.action;
+                    const message = result.monitoring.message;
+                    if (message) {
+                        showAgentBanner(
+                            action === 'ask' ? 'ask' : action === 'alert' ? 'alert' : 'acknowledge',
+                            message
+                        );
+                    }
+                }
+            } catch (e) {
+                showAgentBanner('alert', 'Connection error. Please try again.');
             }
 
-            btn.disabled = false;
-            btn.textContent = 'Send';
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Send';
         }
 
-        function loadDemoScene(n) {
-            document.getElementById('input-field').value = demoScenes[n];
+        function loadDemoScene(sceneNum) {
+            document.getElementById('input-field').value = demoScenes[sceneNum];
             sendObservation();
         }
 
-        // ── Dashboard ───────────────────────────────────────
+        // ── Dashboard Updates ───────────────────────────────
         function updateDashboard(result) {
-            const s = result.state;
-            const m = result.monitoring;
-            if (!s) return;
-            updateVitals(s);
-            updatePatientInfo(s);
-            updateTimeline(s);
-            updateAlerts(s, m);
-            updateTrends(s);
+            const state = result.state;
+            const monitoring = result.monitoring;
+            if (!state) return;
+            updateVitals(state);
+            updatePatientInfo(state);
+            updateTimeline(state);
+            updateAlerts(state, monitoring);
+            updateTrends(state);
         }
 
-        function updateVitals(s) {
-            if (s.latest_bp) {
-                const bp = s.latest_bp;
+        function updateVitals(state) {
+            if (state.latest_bp) {
+                const bp = state.latest_bp;
                 const el = document.getElementById('vital-bp');
-                const v = bp.is_complete ? `${Math.round(bp.systolic)}/${Math.round(bp.diastolic)}` : `${Math.round(bp.systolic)}/?`;
-                if (el.textContent !== v) { el.textContent = v; el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 500); }
-                document.getElementById('time-bp').textContent = new Date(bp.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                const newVal = bp.is_complete ? `${Math.round(bp.systolic)}/${Math.round(bp.diastolic)}` : `${Math.round(bp.systolic)}/?`;
+                if (el.textContent !== newVal) { el.textContent = newVal; el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 600); }
+                document.getElementById('time-bp').textContent = new Date(bp.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             }
-            if (s.latest_hr) {
+            if (state.latest_hr) {
                 const el = document.getElementById('vital-hr');
-                const v = Math.round(s.latest_hr.value);
-                if (el.textContent != v) { el.textContent = v; el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 500); }
-                document.getElementById('time-hr').textContent = new Date(s.latest_hr.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                const newVal = Math.round(state.latest_hr.value);
+                if (el.textContent != newVal) { el.textContent = newVal; el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 600); }
+                document.getElementById('time-hr').textContent = new Date(state.latest_hr.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             }
-            if (s.latest_pain) {
+            if (state.latest_pain) {
                 const el = document.getElementById('vital-pain');
-                const v = `${Math.round(s.latest_pain.value)}/10`;
-                if (el.textContent !== v) { el.textContent = v; el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 500); }
-                document.getElementById('time-pain').textContent = new Date(s.latest_pain.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                const newVal = `${Math.round(state.latest_pain.value)}/10`;
+                if (el.textContent !== newVal) { el.textContent = newVal; el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 600); }
+                document.getElementById('time-pain').textContent = new Date(state.latest_pain.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             }
-            document.getElementById('vital-complaint').textContent = s.chief_complaint || '—';
+            document.getElementById('vital-complaint').textContent = state.chief_complaint || '—';
         }
 
-        function updatePatientInfo(s) {
-            const d = s.demographics;
+        function updatePatientInfo(state) {
+            const d = state.demographics;
             document.getElementById('patient-demo').textContent = d.age ? `${d.age}${d.sex ? d.sex[0].toUpperCase() : ''}` : '—';
-            document.getElementById('patient-complaint').textContent = s.chief_complaint || '—';
-            document.getElementById('patient-meds').textContent = s.medications ? s.medications.length : 0;
-            document.getElementById('patient-events').textContent = s.timeline ? s.timeline.length : 0;
-            document.getElementById('patient-pending').textContent = s.pending_information ? s.pending_information.length : 0;
+            document.getElementById('patient-complaint').textContent = state.chief_complaint || '—';
+            document.getElementById('patient-meds').textContent = state.medications ? state.medications.length : 0;
+            document.getElementById('patient-events').textContent = state.timeline ? state.timeline.length : 0;
+            document.getElementById('patient-pending').textContent = state.pending_information ? state.pending_information.length : 0;
         }
 
-        function updateTimeline(s) {
-            const c = document.getElementById('timeline');
-            if (!s.timeline || s.timeline.length === 0) {
-                c.innerHTML = '<div class="timeline-empty"><div class="timeline-empty-icon">📋</div><div class="timeline-empty-text">No events recorded</div><div class="timeline-empty-sub">Observations will appear here as they\'re captured</div></div>';
+        function updateTimeline(state) {
+            const container = document.getElementById('timeline');
+            if (!state.timeline || state.timeline.length === 0) {
+                container.innerHTML = '<div class="timeline-empty">No events recorded yet</div>';
                 return;
             }
-            c.innerHTML = s.timeline.slice().reverse().map((e, i) => {
-                const t = new Date(e.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                const dc = e.type === 'medication' ? 'medication' : e.type === 'demographic' ? 'demographic' : e.type === 'alert' ? 'alert' : 'vital';
-                return `<div class="timeline-entry" style="animation: slideIn 0.3s ease ${i*0.05}s both;">
-                    <div class="timeline-marker"><div class="timeline-dot ${dc}"></div><div class="timeline-line"></div></div>
-                    <div class="timeline-content"><div class="timeline-time">${t}</div><div class="timeline-text">${fmtEvent(e)}</div></div>
+            const events = state.timeline.slice().reverse();
+            container.innerHTML = events.map((event, i) => {
+                const time = new Date(event.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const dotClass = event.type === 'vital' ? 'vital' : event.type === 'medication' ? 'medication' : event.type === 'demographic' ? 'demographic' : 'vital';
+                const detail = formatEventDetail(event);
+                return `<div class="timeline-entry" style="animation-delay: ${i * 0.05}s">
+                    <div class="timeline-marker">
+                        <div class="timeline-dot ${dotClass}"></div>
+                        <div class="timeline-line"></div>
+                    </div>
+                    <div class="timeline-content">
+                        <div class="timeline-content-time">${time}</div>
+                        <div class="timeline-content-text">${detail}</div>
+                    </div>
                 </div>`;
             }).join('');
         }
 
-        function fmtEvent(e) {
-            const d = e.data;
-            if (e.type === 'vital') {
-                if (d.systolic !== undefined && d.diastolic !== undefined) return d.diastolic === null ? `BP: ${d.systolic}/? (incomplete)` : `BP: ${d.systolic}/${d.diastolic} mmHg`;
-                if (d.heart_rate !== undefined) return `HR: ${d.heart_rate} bpm`;
-                if (d.pain !== undefined) return `Pain: ${d.pain}/10`;
+        function formatEventDetail(event) {
+            const data = event.data;
+            if (event.type === 'vital') {
+                if (data.systolic !== undefined && data.diastolic !== undefined) {
+                    return data.diastolic === null ? `BP: ${data.systolic}/? (incomplete)` : `BP: ${data.systolic}/${data.diastolic} mmHg`;
+                }
+                if (data.heart_rate !== undefined) return `HR: ${data.heart_rate} bpm`;
+                if (data.pain !== undefined) return `Pain: ${data.pain}/10`;
             }
-            if (e.type === 'medication') return `Medication: ${d.name} ${d.dose || ''}`;
-            if (e.type === 'demographic') {
-                const p = [];
-                if (d.age) p.push(`Age: ${d.age}`);
-                if (d.sex) p.push(`Sex: ${d.sex}`);
-                if (d.chief_complaint) p.push(`Complaint: ${d.chief_complaint}`);
-                return p.join(' · ') || 'Demographics updated';
+            if (event.type === 'medication') return `Medication: ${data.name} ${data.dose || ''}`;
+            if (event.type === 'demographic') {
+                const parts = [];
+                if (data.age) parts.push(`Age: ${data.age}`);
+                if (data.sex) parts.push(`Sex: ${data.sex}`);
+                if (data.chief_complaint) parts.push(`Complaint: ${data.chief_complaint}`);
+                return parts.join(' · ') || 'Demographics updated';
             }
-            if (e.type === 'eta') return `ETA: ${d.eta}`;
-            return e.type;
+            if (event.type === 'eta') return `ETA: ${data.eta}`;
+            return event.type;
         }
 
-        function updateAlerts(s, m) {
-            const c = document.getElementById('alerts');
-            const n = document.getElementById('alert-count');
-            const a = [];
-            if (m && m.alerts) m.alerts.forEach(x => a.push({ type: 'warning', text: x }));
-            if (s.pending_information) s.pending_information.forEach(x => a.push({ type: 'info', text: `Pending: ${x}` }));
-            n.textContent = a.length;
-            n.style.background = a.length > 0 ? 'var(--yellow-light)' : 'var(--bg-subtle)';
-            n.style.color = a.length > 0 ? 'var(--yellow)' : 'var(--text-muted)';
-            if (!a.length) { c.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✓</div><div class="empty-state-text">No active alerts</div></div>'; return; }
-            c.innerHTML = a.map(x => {
-                const cls = x.type === 'critical' ? 'critical' : x.type === 'warning' ? 'warning' : 'info';
-                const ic = x.type === 'critical' ? '🔴' : x.type === 'warning' ? '🟡' : '🔵';
-                return `<div class="alert-entry ${cls}"><span class="alert-icon">${ic}</span><div><div class="alert-text">${x.text}</div><div class="alert-time">now</div></div></div>`;
+        function updateAlerts(state, monitoring) {
+            const container = document.getElementById('alerts');
+            const countEl = document.getElementById('alert-count');
+            const alerts = [];
+            if (monitoring && monitoring.alerts) {
+                monitoring.alerts.forEach(a => alerts.push({ type: 'warning', text: a }));
+            }
+            if (state.pending_information && state.pending_information.length > 0) {
+                state.pending_information.forEach(p => alerts.push({ type: 'info', text: `Pending: ${p}` }));
+            }
+            countEl.textContent = alerts.length;
+            if (alerts.length === 0) {
+                container.innerHTML = '<div class="no-alerts-msg">No active alerts</div>';
+                return;
+            }
+            container.innerHTML = alerts.map((a, i) => {
+                const cls = a.type === 'critical' ? 'critical' : a.type === 'warning' ? 'warning' : 'info';
+                const icon = a.type === 'critical' ? '🔴' : a.type === 'warning' ? '🟡' : '🔵';
+                return `<div class="alert-entry ${cls}" style="animation-delay: ${i * 0.08}s">
+                    <span class="alert-icon">${icon}</span>
+                    <div class="alert-body">
+                        <div class="alert-text">${a.text}</div>
+                        <div class="alert-time">now</div>
+                    </div>
+                </div>`;
             }).join('');
         }
 
-        function updateTrends(s) {
-            const c = document.getElementById('trends');
-            fetch(`${API_BASE}/trends/${sessionId}`).then(r => r.json()).then(d => {
-                if (!d.trends || !d.trends.length) { c.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📈</div><div class="empty-state-text">No trend data</div></div>'; return; }
-                c.innerHTML = d.trends.map(t => {
-                    const arrow = t.direction === 'increasing' ? '↑' : t.direction === 'decreasing' ? '↓' : '→';
-                    const cls = t.direction === 'increasing' ? 'up' : t.direction === 'decreasing' ? 'down' : 'stable';
-                    return `<div class="trend-row"><span class="trend-label">${t.name}</span><span class="trend-arrow ${cls}">${arrow}</span><span class="trend-message">${t.message}</span></div>`;
-                }).join('');
-            });
+        function updateTrends(state) {
+            const container = document.getElementById('trends');
+            fetch(`${API_BASE}/trends/${sessionId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (!data.trends || data.trends.length === 0) {
+                        container.innerHTML = '<div class="no-alerts-msg">No trend data</div>';
+                        return;
+                    }
+                    container.innerHTML = data.trends.map(t => {
+                        const dir = t.direction === 'increasing' ? '↑' : t.direction === 'decreasing' ? '↓' : '→';
+                        const cls = t.direction === 'increasing' ? 'up' : t.direction === 'decreasing' ? 'down' : 'stable';
+                        return `<div class="sparkline-row">
+                            <span class="sparkline-label">${t.name}</span>
+                            <span class="vital-trend ${cls}">${dir}</span>
+                            <span style="font-size: 12px; color: var(--text-secondary); flex: 1;">${t.message}</span>
+                        </div>`;
+                    }).join('');
+                });
         }
 
         // ── Receiving View ──────────────────────────────────
         function updateReceivingView() {
-            fetch(`${API_BASE}/state/${sessionId}`).then(r => r.json()).then(s => {
-                if (!s || s.error) return;
-                if (s.latest_bp && s.latest_bp.is_complete) document.getElementById('recv-bp').textContent = `${Math.round(s.latest_bp.systolic)}/${Math.round(s.latest_bp.diastolic)}`;
-                if (s.latest_hr) document.getElementById('recv-hr').textContent = Math.round(s.latest_hr.value);
-                const d = s.demographics;
-                document.getElementById('recv-demo').textContent = d.age ? `${d.age}${d.sex ? d.sex[0].toUpperCase() : ''}` : '—';
-                document.getElementById('recv-complaint').textContent = s.chief_complaint || '—';
-                if (s.eta) document.getElementById('recv-eta').textContent = s.eta;
-                if (s.medications && s.medications.length) {
-                    document.getElementById('recv-interventions').innerHTML = s.medications.map(m => { const data = m.data || m; return `<div class="intervention-item"><span>${data.name}</span><span>${data.dose || ''}</span></div>`; }).join('');
-                }
-                fetch(`${API_BASE}/trends/${sessionId}`).then(r => r.json()).then(d => {
-                    if (d.trends && d.trends.length) {
-                        document.getElementById('recv-trends').innerHTML = d.trends.map(t => {
-                            const arrow = t.direction === 'increasing' ? '↑' : t.direction === 'decreasing' ? '↓' : '→';
-                            const cls = t.direction === 'increasing' ? 'up' : t.direction === 'decreasing' ? 'down' : 'stable';
-                            return `<div class="trend-row"><span class="trend-label">${t.name}</span><span class="trend-arrow ${cls}">${arrow}</span><span class="trend-message">${t.message}</span></div>`;
+            fetch(`${API_BASE}/state/${sessionId}`)
+                .then(res => res.json())
+                .then(state => {
+                    if (!state || state.error) return;
+                    if (state.latest_bp && state.latest_bp.is_complete) {
+                        document.getElementById('recv-bp').textContent = `${Math.round(state.latest_bp.systolic)}/${Math.round(state.latest_bp.diastolic)}`;
+                    }
+                    if (state.latest_hr) document.getElementById('recv-hr').textContent = Math.round(state.latest_hr.value);
+                    const d = state.demographics;
+                    document.getElementById('recv-demo').textContent = d.age ? `${d.age}${d.sex ? d.sex[0].toUpperCase() : ''}` : '—';
+                    document.getElementById('recv-complaint').textContent = state.chief_complaint || '—';
+                    if (state.eta) document.getElementById('recv-eta').textContent = state.eta;
+                    if (state.medications && state.medications.length > 0) {
+                        document.getElementById('recv-interventions').innerHTML = state.medications.map(med => {
+                            const data = med.data || med;
+                            return `<div class="intervention-item"><span>${data.name}</span><span>${data.dose || ''}</span></div>`;
                         }).join('');
                     }
+                    fetch(`${API_BASE}/trends/${sessionId}`).then(res => res.json()).then(data => {
+                        if (data.trends && data.trends.length > 0) {
+                            document.getElementById('recv-trends').innerHTML = data.trends.map(t => {
+                                const dir = t.direction === 'increasing' ? '↑' : t.direction === 'decreasing' ? '↓' : '→';
+                                const cls = t.direction === 'increasing' ? 'up' : t.direction === 'decreasing' ? 'down' : 'stable';
+                                return `<div class="sparkline-row"><span class="sparkline-label">${t.name}</span><span class="vital-trend ${cls}">${dir}</span><span style="font-size:12px;color:var(--text-secondary);flex:1;">${t.message}</span></div>`;
+                            }).join('');
+                        }
+                    });
+                    if (state.timeline && state.timeline.length > 0) {
+                        const recent = state.timeline.slice(-5).reverse();
+                        document.getElementById('recv-observations').innerHTML = recent.map((e, i) => {
+                            const cls = e.type === 'medication' ? 'trend' : e.type === 'alert' ? 'alert' : '';
+                            const time = new Date(e.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+                            return `<div class="observation-item ${cls}" style="animation-delay:${i*0.08}s"><strong>${time}</strong> — ${e.type}</div>`;
+                        }).join('');
+                        document.getElementById('handoff-ready-banner').innerHTML = `<h2>Transport Data Available</h2><p>${state.timeline.length} events recorded — Click "Handoff" for full summary</p>`;
+                    }
                 });
-                if (s.timeline && s.timeline.length) {
-                    document.getElementById('recv-observations').innerHTML = s.timeline.slice(-5).reverse().map((e, i) => {
-                        const cls = e.type === 'medication' ? 'trend' : e.type === 'alert' ? 'alert' : '';
-                        const t = new Date(e.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                        return `<div class="observation-item ${cls}"><strong>${t}</strong> — ${e.type}</div>`;
-                    }).join('');
-                    document.getElementById('handoff-ready-banner').innerHTML = `<h2>Transport Data Available</h2><p>${s.timeline.length} events recorded — Click "Handoff" for full summary</p>`;
-                }
-            });
         }
 
-        // ── Handoff ─────────────────────────────────────────
+        // ── Handoff Modal ───────────────────────────────────
         async function openHandoff() {
             document.getElementById('handoff-modal').classList.add('active');
             document.getElementById('handoff-content').innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Generating summary...</div>';
             try {
-                const r = await fetch(`${API_BASE}/handoff/${sessionId}`);
-                const d = await r.json();
-                let h = '';
-                if (d.patient) {
-                    h += '<div class="handoff-section"><div class="handoff-section-title">Patient</div>';
-                    if (d.patient.demographics) h += `<div class="handoff-row"><span class="handoff-label">Demographics</span><span class="handoff-value">${d.patient.demographics}</span></div>`;
-                    if (d.patient.chief_complaint) h += `<div class="handoff-row"><span class="handoff-label">Complaint</span><span class="handoff-value">${d.patient.chief_complaint}</span></div>`;
-                    h += '</div>';
+                const res = await fetch(`${API_BASE}/handoff/${sessionId}`);
+                const data = await res.json();
+                let html = '';
+                if (data.patient) {
+                    html += '<div class="handoff-section"><div class="handoff-section-title">Patient</div>';
+                    if (data.patient.demographics) html += `<div class="handoff-row"><span class="handoff-label">Demographics</span><span class="handoff-value">${data.patient.demographics}</span></div>`;
+                    if (data.patient.chief_complaint) html += `<div class="handoff-row"><span class="handoff-label">Complaint</span><span class="handoff-value">${data.patient.chief_complaint}</span></div>`;
+                    html += '</div>';
                 }
-                if (d.initial_vitals) {
-                    h += '<div class="handoff-section"><div class="handoff-section-title">Initial Vitals</div>';
-                    if (d.initial_vitals.bp) h += `<div class="handoff-row"><span class="handoff-label">BP</span><span class="handoff-value">${d.initial_vitals.bp}</span></div>`;
-                    if (d.initial_vitals.hr) h += `<div class="handoff-row"><span class="handoff-label">HR</span><span class="handoff-value">${d.initial_vitals.hr} bpm</span></div>`;
-                    if (d.initial_vitals.pain) h += `<div class="handoff-row"><span class="handoff-label">Pain</span><span class="handoff-value">${d.initial_vitals.pain}/10</span></div>`;
-                    h += '</div>';
+                if (data.initial_vitals) {
+                    html += '<div class="handoff-section"><div class="handoff-section-title">Initial Vitals</div>';
+                    if (data.initial_vitals.bp) html += `<div class="handoff-row"><span class="handoff-label">BP</span><span class="handoff-value">${data.initial_vitals.bp}</span></div>`;
+                    if (data.initial_vitals.hr) html += `<div class="handoff-row"><span class="handoff-label">HR</span><span class="handoff-value">${data.initial_vitals.hr} bpm</span></div>`;
+                    if (data.initial_vitals.pain) html += `<div class="handoff-row"><span class="handoff-label">Pain</span><span class="handoff-value">${data.initial_vitals.pain}/10</span></div>`;
+                    html += '</div>';
                 }
-                if (d.latest_vitals) {
-                    h += '<div class="handoff-section"><div class="handoff-section-title">Latest Vitals</div>';
-                    if (d.latest_vitals.bp) h += `<div class="handoff-row"><span class="handoff-label">BP</span><span class="handoff-value">${d.latest_vitals.bp}</span></div>`;
-                    if (d.latest_vitals.hr) h += `<div class="handoff-row"><span class="handoff-label">HR</span><span class="handoff-value">${d.latest_vitals.hr} bpm</span></div>`;
-                    if (d.latest_vitals.pain) h += `<div class="handoff-row"><span class="handoff-label">Pain</span><span class="handoff-value">${d.latest_vitals.pain}/10</span></div>`;
-                    h += '</div>';
+                if (data.latest_vitals) {
+                    html += '<div class="handoff-section"><div class="handoff-section-title">Latest Vitals</div>';
+                    if (data.latest_vitals.bp) html += `<div class="handoff-row"><span class="handoff-label">BP</span><span class="handoff-value">${data.latest_vitals.bp}</span></div>`;
+                    if (data.latest_vitals.hr) html += `<div class="handoff-row"><span class="handoff-label">HR</span><span class="handoff-value">${data.latest_vitals.hr} bpm</span></div>`;
+                    if (data.latest_vitals.pain) html += `<div class="handoff-row"><span class="handoff-label">Pain</span><span class="handoff-value">${data.latest_vitals.pain}/10</span></div>`;
+                    html += '</div>';
                 }
-                if (d.medications && d.medications.length) { h += '<div class="handoff-section"><div class="handoff-section-title">Medications</div><ul class="handoff-list">'; d.medications.forEach(m => h += `<li>${m}</li>`); h += '</ul></div>'; }
-                if (d.trends && d.trends.length) { h += '<div class="handoff-section"><div class="handoff-section-title">Trends</div><ul class="handoff-list">'; d.trends.forEach(t => h += `<li>${t}</li>`); h += '</ul></div>'; }
-                if (d.pending_items && d.pending_items.length) { h += `<div class="handoff-alert"><div class="handoff-alert-title">Requires Review</div>`; d.pending_items.forEach(p => h += `<div class="handoff-alert-item">• ${p}</div>`); h += '</div>'; }
-                document.getElementById('handoff-content').innerHTML = h || '<div style="padding:24px;color:var(--text-muted);">No data available</div>';
-            } catch(e) {
+                if (data.medications && data.medications.length > 0) {
+                    html += '<div class="handoff-section"><div class="handoff-section-title">Medications</div><ul class="handoff-list">';
+                    data.medications.forEach(m => html += `<li>${m}</li>`);
+                    html += '</ul></div>';
+                }
+                if (data.trends && data.trends.length > 0) {
+                    html += '<div class="handoff-section"><div class="handoff-section-title">Trends</div><ul class="handoff-list">';
+                    data.trends.forEach(t => html += `<li>${t}</li>`);
+                    html += '</ul></div>';
+                }
+                if (data.pending_items && data.pending_items.length > 0) {
+                    html += `<div class="handoff-alert"><div class="handoff-alert-title">Requires Review</div>`;
+                    data.pending_items.forEach(p => html += `<div class="handoff-alert-item">• ${p}</div>`);
+                    html += '</div>';
+                }
+                document.getElementById('handoff-content').innerHTML = html || '<div style="padding:24px;color:var(--text-muted);">No data available</div>';
+            } catch (e) {
                 document.getElementById('handoff-content').innerHTML = '<div style="padding:24px;color:var(--red);">Error loading handoff</div>';
             }
         }
 
-        function closeHandoff() { document.getElementById('handoff-modal').classList.remove('active'); }
+        function closeHandoff() {
+            document.getElementById('handoff-modal').classList.remove('active');
+        }
 
         async function resetSession() {
-            if (sessionId) await fetch(`${API_BASE}/session/${sessionId}`, { method: 'DELETE' });
+            if (sessionId) {
+                await fetch(`${API_BASE}/session/${sessionId}`, { method: 'DELETE' });
+            }
             location.reload();
         }
 
-        // ── Keys ────────────────────────────────────────────
-        document.addEventListener('keydown', e => {
+        // ── Keyboard Shortcuts ──────────────────────────────
+        document.addEventListener('keydown', (e) => {
             if (e.ctrlKey && e.key === 'm') { e.preventDefault(); toggleVoice(); }
-            if (e.key === 'Enter' && !e.shiftKey && document.activeElement === document.getElementById('input-field')) { e.preventDefault(); sendObservation(); }
+            if (e.key === 'Enter' && !e.shiftKey && document.activeElement === document.getElementById('input-field')) {
+                e.preventDefault(); sendObservation();
+            }
         });
 
-        document.getElementById('handoff-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeHandoff(); });
+        document.getElementById('handoff-modal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeHandoff();
+        });
 
         init();
     </script>
