@@ -1,131 +1,65 @@
-# PulseRelay - Devpost Submission
-
-## Track: Taskmaster
-
-## One-liner
-Hands-free AI agent that lets paramedics document patient transport by speaking naturally, while automatically detecting clinical changes and preparing hospital handoffs.
+# PulseRelay — Devpost Submission
 
 ## The Problem
-During ambulance transport, paramedics are busy treating patients. They shouldn't have to stop care to type into a computer. Yet patient records must be accurate, complete, and available to the receiving hospital.
+
+Every year, millions of patients are transported by ambulance. During those critical minutes, paramedics are doing two jobs at once: keeping the patient alive *and* trying to document everything the hospital needs to know. They're calling out vitals, administering medications, noting changes — and hoping someone is writing it down correctly.
 
 ## The Solution
-PulseRelay listens to paramedic observations, extracts structured clinical data, maintains a live patient state, detects changes and missing information, and prepares a structured handoff - all without requiring the paramedic to touch a keyboard.
+
+PulseRelay listens to what the paramedic says, extracts the clinical data in real time, tracks the patient's condition throughout transport, and hands the receiving hospital a complete, structured summary — all without the paramedic ever touching a keyboard.
+
+A paramedic speaks naturally: *"Patient is a 64-year-old male with chest pain. BP 104 over 67, heart rate 108, pain seven out of ten."*
+
+PulseRelay instantly extracts the data, records it, monitors for changes, asks for clarification when something is unclear, and prepares a complete handoff summary.
 
 ## Key Features
 
-### 1. Natural Voice Input
-Paramedics speak naturally - no structured commands needed.
-- "BP is 104 over 67, heart rate 108, pain is about a seven"
-- "Aspirin 324 milligrams given"
-- "Pressure is 98 over 61 now, heart rate 116, pain is worse, maybe an eight"
+- **Voice-first input** — Paramedics speak naturally, no structured commands
+- **Real-time extraction** — Vital signs, medications, demographics captured instantly
+- **Uncertainty handling** — When data is incomplete, it asks instead of guessing
+- **Proactive monitoring** — Detects changes and surfaces them without being asked
+- **Structured handoff** — Complete transport summary for the receiving hospital
+- **Receiving team view** — Real-time dashboard showing transport data as it's captured
 
-### 2. Uncertainty Handling (Strong Demo Moment)
-When observations are incomplete, PulseRelay asks for clarification - never invents values.
-- Input: "BP ninety-two over..."
-- Response: "I captured systolic 92, but the diastolic value is unclear. Can you repeat it?"
+## How It Works
 
-### 3. Proactive State Monitoring
-The agent surfaces meaningful changes without being asked.
-- "Patient state is changing: BP decreased from 104/67 to 92/58 while heart rate increased from 108 to 116."
-
-### 4. Deterministic State Engine
-Clinical state is managed by deterministic code, not the LLM.
-- Gemini handles: natural language extraction, reasoning, conversation
-- Code handles: state storage, trend calculation, validation, confidence
-
-### 5. Structured Handoff
-Generates complete transport summary for receiving hospital:
-- Patient demographics and chief complaint
-- Initial vs. latest vitals
-- Medications administered
-- Trend analysis
-- Timeline of events
-- Items requiring clinician review
-
-### 6. Receiving Team View
-Real-time dashboard showing transport data as it's captured.
-
-## Architecture
-
-```
-Paramedic Speech → Gemini (ADK) → Event Validator → Patient State Store
-                                                          ↓
-                                        ┌─────────────────┴─────────────────┐
-                                        ↓                                   ↓
-                                  Trend Engine                      Completeness Check
-                                        ↓                                   ↓
-                                        └─────────────────┬─────────────────┘
-                                                          ↓
-                                                    Agent Decision
-                                                          ↓
-                                              ┌───────────┴───────────┐
-                                              ↓                       ↓
-                                      Ask Paramedic          Proactive Alert
-                                              ↓                       ↓
-                                              └───────────┬───────────┘
-                                                          ↓
-                                                    Handoff Agent
-                                                          ↓
-                                                  Receiving Hospital
-```
-
-## Google Stack
-
-| Service | Purpose |
-|---------|---------|
-| **Google ADK** | Agent orchestration framework |
-| **Gemini 3.5 Flash** | Clinical text extraction |
-| **Cloud Run** | Application hosting |
-| **Firestore** | Patient state persistence |
-| **Pub/Sub** | Event-driven processing |
-
-## Demo Scenario
-
-**Patient**: 64-year-old male with chest pain during ambulance transport.
-
-| Scene | Paramedic Says | System Response |
-|-------|---------------|-----------------|
-| 1 | "BP 104 over 67, HR 108, pain 7/10" | Records vitals, extracts demographics |
-| 2 | "Aspirin 324mg administered" | Records medication |
-| 3 | "BP 98 over 61, HR 116, pain 8" | Detects changes, sends alert |
-| 4 | "BP ninety-two over..." | Asks for clarification (uncertainty) |
-| 5 | "92 over 58" | Updates state, calculates trends |
-| 6 | "Two minutes out" | Generates handoff summary |
+1. Paramedic speaks into microphone (or types)
+2. Gemini 3.5 Flash extracts structured clinical data
+3. Deterministic code validates, stores, and tracks trends
+4. Agent detects changes, asks for clarification on incomplete data
+5. Handoff summary generated with initial vs. latest vitals, medications, trends
 
 ## What Makes This Agentic
 
-1. **Autonomous monitoring** - Detects changes without being asked
-2. **Uncertainty handling** - Asks for clarification when data is incomplete
-3. **State awareness** - Maintains context across observations
-4. **Proactive communication** - Surfaces important changes immediately
-5. **Workflow orchestration** - Manages full transport documentation lifecycle
+- **Autonomous monitoring** — Detects changes without being asked
+- **Uncertainty handling** — Asks for clarification when data is incomplete
+- **State awareness** — Maintains context across observations
+- **Proactive communication** — Surfaces important changes immediately
+- **Workflow orchestration** — Manages full transport documentation lifecycle
 
-## What We Did NOT Build (By Design)
+## Tech Stack
 
-- No medical diagnosis
-- No treatment recommendations
-- No autonomous medical decisions
-- No fake clinical validation
-- No unnecessary complexity
+| Technology | Purpose |
+|------------|---------|
+| Google Gemini 3.5 Flash | Clinical text extraction |
+| Google ADK | Agent orchestration |
+| FastAPI | Backend API |
+| Cloud Run | Application hosting |
+| Firestore | Patient state persistence |
+| Pub/Sub | Event-driven processing |
 
-## Running the Demo
+## Safety Architecture
 
-```bash
-# Install dependencies
-pip install -r requirements.txt
+Gemini handles language understanding. Deterministic Python code handles everything else — storing values, validating ranges, calculating trends, tracking confidence. No hallucinated vitals. No invented medications. No AI-written clinical notes. The AI understands; the code decides.
 
-# Run CLI demo
-python demo.py
+## Demo
 
-# Run web dashboard
-uvicorn pulserelay.backend.main:app --port 8081
-# Open http://localhost:8081
-```
+Run `python demo.py` for a 6-scene walkthrough, or `uvicorn pulserelay.backend.main:app --port 8081` and open the dashboard.
 
-## Team
+## What It Doesn't Do
 
-Built for the All Things Agentic Hackathon.
+PulseRelay does not diagnose. It does not recommend treatment. It does not make medical decisions. It documents what the paramedic observes — accurately, completely, and in real time.
 
-## License
+---
 
-MIT
+*Built for the All Things Agentic Hackathon.*
