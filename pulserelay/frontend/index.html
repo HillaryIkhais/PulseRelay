@@ -1838,7 +1838,6 @@
         // ── Voice Synthesis ────────────────────────────────
         function findFemaleVoice() {
             const voices = speechSynthesis.getVoices();
-            // Try to find a female-sounding voice
             const preferred = [
                 'Google US English Female',
                 'Google UK English Female',
@@ -1856,18 +1855,16 @@
                 const v = voices.find(v => v.name.includes(name));
                 if (v) return v;
             }
-            // Fallback: find any voice with "female" in name
             const female = voices.find(v => v.name.toLowerCase().includes('female'));
             if (female) return female;
-            // Fallback: find higher-pitched voice
             return voices.find(v => v.lang.startsWith('en')) || voices[0];
         }
 
-        function speak(text) {
+        function speakChunk(text) {
             return new Promise(resolve => {
                 const u = new SpeechSynthesisUtterance(text);
-                u.rate = 1.15;
-                u.pitch = 1.1;
+                u.rate = 1.35;
+                u.pitch = 1.15;
                 u.volume = 1;
                 const v = findFemaleVoice();
                 if (v) u.voice = v;
@@ -1877,18 +1874,23 @@
             });
         }
 
-        function speakPartial(text) {
-            return new Promise(resolve => {
-                const u = new SpeechSynthesisUtterance(text);
-                u.rate = 1.1;
-                u.pitch = 1.05;
-                u.volume = 1;
-                const v = findFemaleVoice();
-                if (v) u.voice = v;
-                u.onend = resolve;
-                u.onerror = resolve;
-                speechSynthesis.speak(u);
-            });
+        // Speak like a paramedic in motion: short bursts, breath between phrases
+        async function speakParamedic(text) {
+            // Break into natural chunks (commas, periods, conjunctions)
+            const chunks = text
+                .replace(/\. /g, '.|')
+                .replace(/, /g, ',|')
+                .replace(/ and /gi, ' and|')
+                .split('|')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+
+            for (const chunk of chunks) {
+                if (!demoPlaying) break;
+                await speakChunk(chunk);
+                // Small breath between chunks
+                await new Promise(r => setTimeout(r, 80 + Math.random() * 60));
+            }
         }
 
         // ── Play Demo (voice + sound) ──────────────────────
@@ -1919,7 +1921,7 @@
             sfxMicOn();
             await new Promise(r => setTimeout(r, 400));
             const t1 = demoScenes[1];
-            const s1 = speakPartial(t1);
+            const s1 = speakParamedic(t1);
             input.value = '';
             for (let c = 0; c < t1.length; c++) {
                 if (!demoPlaying) break;
@@ -1941,7 +1943,7 @@
             sfxMicOn();
             await new Promise(r => setTimeout(r, 400));
             const t2 = demoScenes[2];
-            const s2 = speakPartial(t2);
+            const s2 = speakParamedic(t2);
             input.value = '';
             for (let c = 0; c < t2.length; c++) {
                 if (!demoPlaying) break;
@@ -1963,7 +1965,7 @@
             sfxMicOn();
             await new Promise(r => setTimeout(r, 400));
             const t3 = demoScenes[3];
-            const s3 = speakPartial(t3);
+            const s3 = speakParamedic(t3);
             input.value = '';
             for (let c = 0; c < t3.length; c++) {
                 if (!demoPlaying) break;
@@ -1985,7 +1987,7 @@
             sfxMicOn();
             await new Promise(r => setTimeout(r, 400));
             const t4 = demoScenes[4];
-            const s4 = speakPartial(t4);
+            const s4 = speakParamedic(t4);
             input.value = '';
             for (let c = 0; c < t4.length; c++) {
                 if (!demoPlaying) break;
@@ -2007,7 +2009,7 @@
             sfxMicOn();
             await new Promise(r => setTimeout(r, 400));
             const t5 = demoScenes[5];
-            const s5 = speakPartial(t5);
+            const s5 = speakParamedic(t5);
             input.value = '';
             for (let c = 0; c < t5.length; c++) {
                 if (!demoPlaying) break;
@@ -2029,7 +2031,7 @@
             sfxMicOn();
             await new Promise(r => setTimeout(r, 400));
             const t6 = demoScenes[6];
-            const s6 = speakPartial(t6);
+            const s6 = speakParamedic(t6);
             input.value = '';
             for (let c = 0; c < t6.length; c++) {
                 if (!demoPlaying) break;
