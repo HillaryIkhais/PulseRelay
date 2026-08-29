@@ -1776,7 +1776,7 @@
             sendBtn.textContent = 'Send';
         }
 
-        // ── Sound Effects ──────────────────────────────────
+        // ── Sound Effects (medical device style) ───────────
         let audioCtx = null;
 
         function getAudioCtx() {
@@ -1798,41 +1798,47 @@
             osc.stop(ctx.currentTime + duration);
         }
 
+        // Heart monitor beep — clean, single pulse
         function sfxVitalUpdate() {
-            playTone(880, 0.1, 'sine', 0.12);
-            setTimeout(() => playTone(1100, 0.15, 'sine', 0.1), 80);
+            playTone(1000, 0.08, 'sine', 0.2);
         }
 
+        // Medical alarm — three-tone上升
         function sfxAlert() {
-            playTone(523, 0.15, 'square', 0.08);
-            setTimeout(() => playTone(659, 0.15, 'square', 0.08), 150);
-            setTimeout(() => playTone(784, 0.2, 'square', 0.06), 300);
+            playTone(880, 0.12, 'sine', 0.18);
+            setTimeout(() => playTone(1100, 0.12, 'sine', 0.15), 130);
+            setTimeout(() => playTone(1320, 0.18, 'sine', 0.12), 260);
         }
 
+        // Clarification tone — two-tone descending
         function sfxAsk() {
-            playTone(440, 0.2, 'sine', 0.1);
-            setTimeout(() => playTone(554, 0.25, 'sine', 0.08), 200);
+            playTone(880, 0.15, 'sine', 0.15);
+            setTimeout(() => playTone(660, 0.2, 'sine', 0.12), 180);
         }
 
+        // Keystroke tick
         function sfxTyping() {
-            playTone(1200 + Math.random() * 400, 0.03, 'square', 0.03);
+            playTone(1800 + Math.random() * 200, 0.02, 'square', 0.04);
         }
 
+        // Mic activation — short chirp up
         function sfxMicOn() {
-            playTone(660, 0.08, 'sine', 0.1);
-            setTimeout(() => playTone(880, 0.12, 'sine', 0.08), 60);
+            playTone(600, 0.06, 'sine', 0.12);
+            setTimeout(() => playTone(900, 0.08, 'sine', 0.1), 50);
         }
 
+        // Mic deactivation — short chirp down
         function sfxMicOff() {
-            playTone(880, 0.08, 'sine', 0.1);
-            setTimeout(() => playTone(660, 0.12, 'sine', 0.08), 60);
+            playTone(900, 0.06, 'sine', 0.12);
+            setTimeout(() => playTone(600, 0.08, 'sine', 0.1), 50);
         }
 
+        // Handoff ready — four-note ascending chime
         function sfxHandoff() {
-            playTone(523, 0.12, 'sine', 0.1);
-            setTimeout(() => playTone(659, 0.12, 'sine', 0.1), 120);
-            setTimeout(() => playTone(784, 0.12, 'sine', 0.1), 240);
-            setTimeout(() => playTone(1047, 0.2, 'sine', 0.08), 360);
+            playTone(523, 0.1, 'sine', 0.12);
+            setTimeout(() => playTone(659, 0.1, 'sine', 0.12), 110);
+            setTimeout(() => playTone(784, 0.1, 'sine', 0.12), 220);
+            setTimeout(() => playTone(1047, 0.18, 'sine', 0.1), 330);
         }
 
         // ── Voice Synthesis ────────────────────────────────
