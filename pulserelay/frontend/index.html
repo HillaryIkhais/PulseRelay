@@ -1801,52 +1801,64 @@
             osc.stop(ctx.currentTime + duration);
         }
 
-        // Heart monitor beep — clean, single pulse
-        function sfxVitalUpdate() {
-            playTone(1000, 0.12, 'sine', 0.4);
+        // Continuous heart monitor — runs in background
+        let heartMonitorInterval = null;
+
+        function startHeartMonitor() {
+            let beatCount = 0;
+            heartMonitorInterval = setInterval(() => {
+                if (!demoPlaying) { stopHeartMonitor(); return; }
+                // Beep every ~0.8 seconds (like a real monitor)
+                playTone(1000, 0.06, 'sine', 0.15);
+                beatCount++;
+            }, 800);
         }
 
-        // Medical alarm — three-tone rising
+        function stopHeartMonitor() {
+            if (heartMonitorInterval) {
+                clearInterval(heartMonitorInterval);
+                heartMonitorInterval = null;
+            }
+        }
+
+        // Alert alarm — plays OVER the heart monitor
         function sfxAlert() {
-            playTone(880, 0.15, 'sine', 0.35);
-            setTimeout(() => playTone(1100, 0.15, 'sine', 0.3), 160);
-            setTimeout(() => playTone(1320, 0.22, 'sine', 0.25), 320);
+            playTone(880, 0.12, 'square', 0.35);
+            setTimeout(() => playTone(1100, 0.12, 'square', 0.3), 130);
+            setTimeout(() => playTone(1320, 0.18, 'square', 0.25), 260);
+            // Repeat alarm
+            setTimeout(() => {
+                playTone(880, 0.12, 'square', 0.35);
+                setTimeout(() => playTone(1100, 0.12, 'square', 0.3), 130);
+                setTimeout(() => playTone(1320, 0.18, 'square', 0.25), 260);
+            }, 400);
         }
 
-        // Clarification tone — two-tone descending
+        // Clarification tone
         function sfxAsk() {
-            playTone(880, 0.18, 'sine', 0.35);
-            setTimeout(() => playTone(660, 0.25, 'sine', 0.3), 200);
+            playTone(880, 0.15, 'sine', 0.35);
+            setTimeout(() => playTone(660, 0.2, 'sine', 0.3), 180);
         }
 
-        // Keystroke tick
-        function sfxTyping() {
-            playTone(2000 + Math.random() * 200, 0.03, 'square', 0.08);
-        }
-
-        // Mic activation — short chirp up
+        // Mic activation
         function sfxMicOn() {
-            playTone(600, 0.08, 'sine', 0.25);
-            setTimeout(() => playTone(900, 0.1, 'sine', 0.2), 60);
+            playTone(600, 0.06, 'sine', 0.3);
+            setTimeout(() => playTone(900, 0.08, 'sine', 0.25), 50);
         }
 
-        // Mic deactivation — short chirp down
+        // Mic deactivation
         function sfxMicOff() {
-            playTone(900, 0.08, 'sine', 0.25);
-            setTimeout(() => playTone(600, 0.1, 'sine', 0.2), 60);
+            playTone(900, 0.06, 'sine', 0.3);
+            setTimeout(() => playTone(600, 0.08, 'sine', 0.25), 50);
         }
 
-        // Handoff ready — four-note ascending chime
+        // Handoff chime
         function sfxHandoff() {
-            playTone(523, 0.12, 'sine', 0.3);
-            setTimeout(() => playTone(659, 0.12, 'sine', 0.3), 120);
-            setTimeout(() => playTone(784, 0.12, 'sine', 0.3), 240);
-            setTimeout(() => playTone(1047, 0.22, 'sine', 0.25), 360);
-        }
-
-        // Pause for sound to finish before voice starts
-        function sfxThen(ms) {
-            return new Promise(r => setTimeout(r, ms));
+            stopHeartMonitor();
+            playTone(523, 0.1, 'sine', 0.3);
+            setTimeout(() => playTone(659, 0.1, 'sine', 0.3), 110);
+            setTimeout(() => playTone(784, 0.1, 'sine', 0.3), 220);
+            setTimeout(() => playTone(1047, 0.18, 'sine', 0.25), 330);
         }
 
         // ── Voice Synthesis ────────────────────────────────
@@ -1912,13 +1924,14 @@
             }
         }
 
-        // ── Play Demo (voice + sound) ──────────────────────
+        // ── Play Demo (voice + sound — emergency style) ────
         let demoPlaying = false;
 
         async function playDemo() {
             if (demoPlaying) {
                 demoPlaying = false;
                 speechSynthesis.cancel();
+                stopHeartMonitor();
                 const btn = document.getElementById('play-demo-btn');
                 btn.classList.remove('playing');
                 document.getElementById('play-demo-text').textContent = 'Play Demo';
@@ -1930,8 +1943,11 @@
             btn.classList.add('playing');
             document.getElementById('play-demo-text').textContent = 'Playing...';
 
-            // Unlock audio context on first user gesture
+            // Unlock audio context
             getAudioCtx();
+
+            // Start heart monitor immediately — continuous background beep
+            startHeartMonitor();
 
             // Load voices
             speechSynthesis.getVoices();
@@ -1942,58 +1958,52 @@
                 if (!demoPlaying) return;
                 const text = demoScenes[sceneNum];
 
-                // 1. MIC ON beep
+                // MIC ON — voice starts, text types, all at once
                 document.getElementById('voice-btn').classList.add('listening');
                 sfxMicOn();
-                await sfxThen(300);
 
-                // 2. Voice speaks + text types simultaneously
+                // Voice speaks AND text types simultaneously
                 const voicePromise = speakParamedic(text);
                 input.value = '';
                 for (let c = 0; c < text.length; c++) {
                     if (!demoPlaying) break;
                     input.value += text[c];
-                    if (c % 4 === 0) sfxTyping();
                     await new Promise(r => setTimeout(r, 35));
                 }
 
-                // 3. Wait for voice to finish
+                // Wait for voice to finish
                 await voicePromise;
 
-                // 4. MIC OFF beep
+                // MIC OFF
                 sfxMicOff();
-                await sfxThen(200);
                 document.getElementById('voice-btn').classList.remove('listening');
 
-                // 5. Send observation
+                // Send observation
                 await sendObservation();
 
-                // 6. System response sound (distinct, after voice stops)
-                await sfxThen(100);
+                // Agent response sound — PLAYS OVER heart monitor
                 if (expectAction === 'alert') {
                     sfxAlert();
                 } else if (expectAction === 'ask') {
                     sfxAsk();
-                } else {
-                    sfxVitalUpdate();
                 }
 
-                // 7. Pause before next scene
-                await sfxThen(1500);
+                // Short pause
+                await new Promise(r => setTimeout(r, 1200));
             }
 
-            await runScene(1, 'ack');      // "BP 104 over 67..." → vital beep
-            await runScene(2, 'ack');      // "Aspirin 324mg..." → vital beep
-            await runScene(3, 'alert');    // "BP 98 over 61..." → alert alarm
-            await runScene(4, 'ask');      // "BP ninety-two over..." → ask tone
-            await runScene(5, 'alert');    // "92 over 58" → alert alarm
-            await runScene(6, 'alert');    // "Two minutes out" → alert alarm
+            await runScene(1, 'ack');
+            await runScene(2, 'ack');
+            await runScene(3, 'alert');
+            await runScene(4, 'alert');
+            await runScene(5, 'alert');
+            await runScene(6, 'alert');
 
-            // Final handoff chime
-            await sfxThen(500);
+            // Handoff
+            await new Promise(r => setTimeout(r, 500));
             sfxHandoff();
 
-            await sfxThen(1000);
+            await new Promise(r => setTimeout(r, 1000));
 
             demoPlaying = false;
             btn.classList.remove('playing');
