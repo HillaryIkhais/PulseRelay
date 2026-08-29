@@ -1863,8 +1863,8 @@
         function speakChunk(text) {
             return new Promise(resolve => {
                 const u = new SpeechSynthesisUtterance(text);
-                u.rate = 1.35;
-                u.pitch = 1.15;
+                u.rate = 1.05;
+                u.pitch = 1.1;
                 u.volume = 1;
                 const v = findFemaleVoice();
                 if (v) u.voice = v;
@@ -1874,9 +1874,8 @@
             });
         }
 
-        // Speak like a paramedic in motion: short bursts, breath between phrases
+        // Speak like a paramedic: clear, professional, measured
         async function speakParamedic(text) {
-            // Break into natural chunks (commas, periods, conjunctions)
             const chunks = text
                 .replace(/\. /g, '.|')
                 .replace(/, /g, ',|')
@@ -1888,8 +1887,7 @@
             for (const chunk of chunks) {
                 if (!demoPlaying) break;
                 await speakChunk(chunk);
-                // Small breath between chunks
-                await new Promise(r => setTimeout(r, 80 + Math.random() * 60));
+                await new Promise(r => setTimeout(r, 150 + Math.random() * 100));
             }
         }
 
