@@ -1776,15 +1776,103 @@
             sendBtn.textContent = 'Send';
         }
 
-        // ── Play Demo (voice simulation) ───────────────────
+        // ── Sound Effects ──────────────────────────────────
+        let audioCtx = null;
+
+        function getAudioCtx() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            return audioCtx;
+        }
+
+        function playTone(freq, duration, type = 'sine', volume = 0.15) {
+            const ctx = getAudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(volume, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + duration);
+        }
+
+        function sfxVitalUpdate() {
+            playTone(880, 0.1, 'sine', 0.12);
+            setTimeout(() => playTone(1100, 0.15, 'sine', 0.1), 80);
+        }
+
+        function sfxAlert() {
+            playTone(523, 0.15, 'square', 0.08);
+            setTimeout(() => playTone(659, 0.15, 'square', 0.08), 150);
+            setTimeout(() => playTone(784, 0.2, 'square', 0.06), 300);
+        }
+
+        function sfxAsk() {
+            playTone(440, 0.2, 'sine', 0.1);
+            setTimeout(() => playTone(554, 0.25, 'sine', 0.08), 200);
+        }
+
+        function sfxTyping() {
+            playTone(1200 + Math.random() * 400, 0.03, 'square', 0.03);
+        }
+
+        function sfxMicOn() {
+            playTone(660, 0.08, 'sine', 0.1);
+            setTimeout(() => playTone(880, 0.12, 'sine', 0.08), 60);
+        }
+
+        function sfxMicOff() {
+            playTone(880, 0.08, 'sine', 0.1);
+            setTimeout(() => playTone(660, 0.12, 'sine', 0.08), 60);
+        }
+
+        function sfxHandoff() {
+            playTone(523, 0.12, 'sine', 0.1);
+            setTimeout(() => playTone(659, 0.12, 'sine', 0.1), 120);
+            setTimeout(() => playTone(784, 0.12, 'sine', 0.1), 240);
+            setTimeout(() => playTone(1047, 0.2, 'sine', 0.08), 360);
+        }
+
+        // ── Voice Synthesis ────────────────────────────────
+        function speak(text) {
+            return new Promise(resolve => {
+                const u = new SpeechSynthesisUtterance(text);
+                u.rate = 0.95;
+                u.pitch = 0.9;
+                u.volume = 1;
+                const voices = speechSynthesis.getVoices();
+                const male = voices.find(v => v.name.includes('Male') || v.name.includes('Daniel') || v.name.includes('Google UK English Male'));
+                if (male) u.voice = male;
+                u.onend = resolve;
+                u.onerror = resolve;
+                speechSynthesis.speak(u);
+            });
+        }
+
+        function speakPartial(text) {
+            return new Promise(resolve => {
+                const u = new SpeechSynthesisUtterance(text);
+                u.rate = 0.9;
+                u.pitch = 0.9;
+                u.volume = 1;
+                const voices = speechSynthesis.getVoices();
+                const male = voices.find(v => v.name.includes('Male') || v.name.includes('Daniel') || v.name.includes('Google UK English Male'));
+                if (male) u.voice = male;
+                u.onend = resolve;
+                u.onerror = resolve;
+                speechSynthesis.speak(u);
+            });
+        }
+
+        // ── Play Demo (voice + sound) ──────────────────────
         let demoPlaying = false;
-        let demoTimeout = null;
 
         async function playDemo() {
             if (demoPlaying) {
-                // Stop
                 demoPlaying = false;
-                clearTimeout(demoTimeout);
+                speechSynthesis.cancel();
                 const btn = document.getElementById('play-demo-btn');
                 btn.classList.remove('playing');
                 document.getElementById('play-demo-text').textContent = 'Play Demo';
@@ -1796,39 +1884,141 @@
             btn.classList.add('playing');
             document.getElementById('play-demo-text').textContent = 'Playing...';
 
-            const scenes = [1, 2, 3, 4, 5, 6];
-            const delays = [2000, 2500, 3000, 3500, 2500, 2000];
+            // Load voices
+            speechSynthesis.getVoices();
 
-            for (let i = 0; i < scenes.length; i++) {
+            const input = document.getElementById('input-field');
+
+            // Scene 1: Full assessment
+            document.getElementById('voice-btn').classList.add('listening');
+            sfxMicOn();
+            await new Promise(r => setTimeout(r, 400));
+            const t1 = demoScenes[1];
+            const s1 = speakPartial(t1);
+            input.value = '';
+            for (let c = 0; c < t1.length; c++) {
                 if (!demoPlaying) break;
-
-                const sceneNum = scenes[i];
-                const input = document.getElementById('input-field');
-                const text = demoScenes[sceneNum];
-
-                // Simulate voice: show mic active, type text character by character
-                document.getElementById('voice-btn').classList.add('listening');
-
-                // Type out the text like speech recognition
-                input.value = '';
-                for (let c = 0; c < text.length; c++) {
-                    if (!demoPlaying) break;
-                    input.value += text[c];
-                    await new Promise(r => setTimeout(r, 25));
-                }
-
-                // Keep mic active for a moment
-                await new Promise(r => setTimeout(r, 300));
-
-                // Stop mic, send
-                document.getElementById('voice-btn').classList.remove('listening');
-                await sendObservation();
-
-                // Wait before next scene
-                if (i < scenes.length - 1 && demoPlaying) {
-                    await new Promise(r => setTimeout(r, delays[i]));
-                }
+                input.value += t1[c];
+                if (c % 3 === 0) sfxTyping();
+                await new Promise(r => setTimeout(r, 30));
             }
+            await s1;
+            sfxMicOff();
+            document.getElementById('voice-btn').classList.remove('listening');
+            await sendObservation();
+            sfxVitalUpdate();
+            await new Promise(r => setTimeout(r, 1500));
+
+            if (!demoPlaying) return;
+
+            // Scene 2: Medication
+            document.getElementById('voice-btn').classList.add('listening');
+            sfxMicOn();
+            await new Promise(r => setTimeout(r, 400));
+            const t2 = demoScenes[2];
+            const s2 = speakPartial(t2);
+            input.value = '';
+            for (let c = 0; c < t2.length; c++) {
+                if (!demoPlaying) break;
+                input.value += t2[c];
+                if (c % 3 === 0) sfxTyping();
+                await new Promise(r => setTimeout(r, 30));
+            }
+            await s2;
+            sfxMicOff();
+            document.getElementById('voice-btn').classList.remove('listening');
+            await sendObservation();
+            sfxVitalUpdate();
+            await new Promise(r => setTimeout(r, 1500));
+
+            if (!demoPlaying) return;
+
+            // Scene 3: Change detected
+            document.getElementById('voice-btn').classList.add('listening');
+            sfxMicOn();
+            await new Promise(r => setTimeout(r, 400));
+            const t3 = demoScenes[3];
+            const s3 = speakPartial(t3);
+            input.value = '';
+            for (let c = 0; c < t3.length; c++) {
+                if (!demoPlaying) break;
+                input.value += t3[c];
+                if (c % 3 === 0) sfxTyping();
+                await new Promise(r => setTimeout(r, 30));
+            }
+            await s3;
+            sfxMicOff();
+            document.getElementById('voice-btn').classList.remove('listening');
+            await sendObservation();
+            sfxAlert();
+            await new Promise(r => setTimeout(r, 2000));
+
+            if (!demoPlaying) return;
+
+            // Scene 4: Incomplete — agent asks
+            document.getElementById('voice-btn').classList.add('listening');
+            sfxMicOn();
+            await new Promise(r => setTimeout(r, 400));
+            const t4 = demoScenes[4];
+            const s4 = speakPartial(t4);
+            input.value = '';
+            for (let c = 0; c < t4.length; c++) {
+                if (!demoPlaying) break;
+                input.value += t4[c];
+                if (c % 3 === 0) sfxTyping();
+                await new Promise(r => setTimeout(r, 40));
+            }
+            await s4;
+            sfxMicOff();
+            document.getElementById('voice-btn').classList.remove('listening');
+            await sendObservation();
+            sfxAsk();
+            await new Promise(r => setTimeout(r, 2500));
+
+            if (!demoPlaying) return;
+
+            // Scene 5: Clarification
+            document.getElementById('voice-btn').classList.add('listening');
+            sfxMicOn();
+            await new Promise(r => setTimeout(r, 400));
+            const t5 = demoScenes[5];
+            const s5 = speakPartial(t5);
+            input.value = '';
+            for (let c = 0; c < t5.length; c++) {
+                if (!demoPlaying) break;
+                input.value += t5[c];
+                if (c % 3 === 0) sfxTyping();
+                await new Promise(r => setTimeout(r, 30));
+            }
+            await s5;
+            sfxMicOff();
+            document.getElementById('voice-btn').classList.remove('listening');
+            await sendObservation();
+            sfxAlert();
+            await new Promise(r => setTimeout(r, 1500));
+
+            if (!demoPlaying) return;
+
+            // Scene 6: ETA
+            document.getElementById('voice-btn').classList.add('listening');
+            sfxMicOn();
+            await new Promise(r => setTimeout(r, 400));
+            const t6 = demoScenes[6];
+            const s6 = speakPartial(t6);
+            input.value = '';
+            for (let c = 0; c < t6.length; c++) {
+                if (!demoPlaying) break;
+                input.value += t6[c];
+                if (c % 3 === 0) sfxTyping();
+                await new Promise(r => setTimeout(r, 30));
+            }
+            await s6;
+            sfxMicOff();
+            document.getElementById('voice-btn').classList.remove('listening');
+            await sendObservation();
+            sfxHandoff();
+
+            await new Promise(r => setTimeout(r, 1000));
 
             demoPlaying = false;
             btn.classList.remove('playing');
