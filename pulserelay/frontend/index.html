@@ -1836,15 +1836,41 @@
         }
 
         // ── Voice Synthesis ────────────────────────────────
+        function findFemaleVoice() {
+            const voices = speechSynthesis.getVoices();
+            // Try to find a female-sounding voice
+            const preferred = [
+                'Google US English Female',
+                'Google UK English Female',
+                'Samantha',
+                'Karen',
+                'Victoria',
+                'Moira',
+                'Tessa',
+                'Fiona',
+                'Alice',
+                'Mei-Jia',
+                'Zira'
+            ];
+            for (const name of preferred) {
+                const v = voices.find(v => v.name.includes(name));
+                if (v) return v;
+            }
+            // Fallback: find any voice with "female" in name
+            const female = voices.find(v => v.name.toLowerCase().includes('female'));
+            if (female) return female;
+            // Fallback: find higher-pitched voice
+            return voices.find(v => v.lang.startsWith('en')) || voices[0];
+        }
+
         function speak(text) {
             return new Promise(resolve => {
                 const u = new SpeechSynthesisUtterance(text);
-                u.rate = 0.95;
-                u.pitch = 0.9;
+                u.rate = 1.15;
+                u.pitch = 1.1;
                 u.volume = 1;
-                const voices = speechSynthesis.getVoices();
-                const male = voices.find(v => v.name.includes('Male') || v.name.includes('Daniel') || v.name.includes('Google UK English Male'));
-                if (male) u.voice = male;
+                const v = findFemaleVoice();
+                if (v) u.voice = v;
                 u.onend = resolve;
                 u.onerror = resolve;
                 speechSynthesis.speak(u);
@@ -1854,12 +1880,11 @@
         function speakPartial(text) {
             return new Promise(resolve => {
                 const u = new SpeechSynthesisUtterance(text);
-                u.rate = 0.9;
-                u.pitch = 0.9;
+                u.rate = 1.1;
+                u.pitch = 1.05;
                 u.volume = 1;
-                const voices = speechSynthesis.getVoices();
-                const male = voices.find(v => v.name.includes('Male') || v.name.includes('Daniel') || v.name.includes('Google UK English Male'));
-                if (male) u.voice = male;
+                const v = findFemaleVoice();
+                if (v) u.voice = v;
                 u.onend = resolve;
                 u.onerror = resolve;
                 speechSynthesis.speak(u);
