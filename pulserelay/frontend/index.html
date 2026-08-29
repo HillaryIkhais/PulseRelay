@@ -1776,7 +1776,7 @@
             sendBtn.textContent = 'Send';
         }
 
-        // ── Sound Effects (medical device style) ───────────
+        // ── Sound Effects (EMERGENCY — loud, overlapping) ──
         let audioCtx = null;
 
         function getAudioCtx() {
@@ -1787,78 +1787,62 @@
             return audioCtx;
         }
 
-        function playTone(freq, duration, type = 'sine', volume = 0.3) {
-            const ctx = getAudioCtx();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = type;
-            osc.frequency.value = freq;
-            gain.gain.setValueAtTime(volume, ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + duration);
+        function beep(freq, dur, type, vol) {
+            try {
+                const ctx = getAudioCtx();
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.type = type || 'sine';
+                o.frequency.value = freq || 1000;
+                g.gain.value = vol || 0.4;
+                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+                o.connect(g).connect(ctx.destination);
+                o.start(); o.stop(ctx.currentTime + dur);
+            } catch(e) {}
         }
 
-        // Continuous heart monitor — runs in background
-        let heartMonitorInterval = null;
-
+        // Continuous heart monitor — never stops until handoff
+        let heartTimer = null;
         function startHeartMonitor() {
-            let beatCount = 0;
-            heartMonitorInterval = setInterval(() => {
-                if (!demoPlaying) { stopHeartMonitor(); return; }
-                // Beep every ~0.8 seconds (like a real monitor)
-                playTone(1000, 0.06, 'sine', 0.15);
-                beatCount++;
-            }, 800);
-        }
-
-        function stopHeartMonitor() {
-            if (heartMonitorInterval) {
-                clearInterval(heartMonitorInterval);
-                heartMonitorInterval = null;
+            stopHeartMonitor();
+            function beat() {
+                if (!demoPlaying) return;
+                beep(1000, 0.08, 'sine', 0.3);
+                heartTimer = setTimeout(beat, 800);
             }
+            beat();
+        }
+        function stopHeartMonitor() {
+            if (heartTimer) { clearTimeout(heartTimer); heartTimer = null; }
         }
 
-        // Alert alarm — plays OVER the heart monitor
+        // Alert alarm — LOUD, plays over everything
         function sfxAlert() {
-            playTone(880, 0.12, 'square', 0.35);
-            setTimeout(() => playTone(1100, 0.12, 'square', 0.3), 130);
-            setTimeout(() => playTone(1320, 0.18, 'square', 0.25), 260);
-            // Repeat alarm
-            setTimeout(() => {
-                playTone(880, 0.12, 'square', 0.35);
-                setTimeout(() => playTone(1100, 0.12, 'square', 0.3), 130);
-                setTimeout(() => playTone(1320, 0.18, 'square', 0.25), 260);
-            }, 400);
+            beep(880, 0.12, 'square', 0.5);
+            setTimeout(() => beep(1100, 0.12, 'square', 0.45), 130);
+            setTimeout(() => beep(1320, 0.18, 'square', 0.4), 260);
+            setTimeout(() => beep(880, 0.12, 'square', 0.5), 450);
+            setTimeout(() => beep(1100, 0.12, 'square', 0.45), 580);
+            setTimeout(() => beep(1320, 0.18, 'square', 0.4), 710);
         }
 
-        // Clarification tone
+        // Ask tone
         function sfxAsk() {
-            playTone(880, 0.15, 'sine', 0.35);
-            setTimeout(() => playTone(660, 0.2, 'sine', 0.3), 180);
+            beep(880, 0.15, 'sine', 0.45);
+            setTimeout(() => beep(660, 0.2, 'sine', 0.4), 180);
         }
 
-        // Mic activation
-        function sfxMicOn() {
-            playTone(600, 0.06, 'sine', 0.3);
-            setTimeout(() => playTone(900, 0.08, 'sine', 0.25), 50);
-        }
+        // Mic on/off
+        function sfxMicOn() { beep(900, 0.1, 'sine', 0.4); }
+        function sfxMicOff() { beep(600, 0.1, 'sine', 0.4); }
 
-        // Mic deactivation
-        function sfxMicOff() {
-            playTone(900, 0.06, 'sine', 0.3);
-            setTimeout(() => playTone(600, 0.08, 'sine', 0.25), 50);
-        }
-
-        // Handoff chime
+        // Handoff
         function sfxHandoff() {
             stopHeartMonitor();
-            playTone(523, 0.1, 'sine', 0.3);
-            setTimeout(() => playTone(659, 0.1, 'sine', 0.3), 110);
-            setTimeout(() => playTone(784, 0.1, 'sine', 0.3), 220);
-            setTimeout(() => playTone(1047, 0.18, 'sine', 0.25), 330);
+            beep(523, 0.1, 'sine', 0.4);
+            setTimeout(() => beep(659, 0.1, 'sine', 0.4), 110);
+            setTimeout(() => beep(784, 0.1, 'sine', 0.4), 220);
+            setTimeout(() => beep(1047, 0.2, 'sine', 0.35), 330);
         }
 
         // ── Voice Synthesis ────────────────────────────────
@@ -1889,13 +1873,12 @@
 
         let voiceChunkIndex = 0;
 
-        function speakChunk(text) {
+        async function speakChunk(text) {
             return new Promise(resolve => {
                 const u = new SpeechSynthesisUtterance(text);
                 u.rate = 0.92;
-                // Vary pitch slightly per chunk for natural feel
                 u.pitch = 1.0 + (Math.sin(voiceChunkIndex * 0.7) * 0.08);
-                u.volume = 1;
+                u.volume = 0.85;
                 const v = findFemaleVoice();
                 if (v) u.voice = v;
                 voiceChunkIndex++;
