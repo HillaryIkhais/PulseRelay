@@ -62,12 +62,60 @@ A 64-year-old male with chest pain during transport:
 ## Run It
 
 ```bash
+# Clone the repo
+git clone https://github.com/HillaryIkhais/PulseRelay.git
+cd PulseRelay
+
+# Install dependencies
 pip install -r requirements.txt
-uvicorn pulserelay.backend.main:app --port 8081
-# Open http://localhost:8081
+
+# Set your Gemini API key
+export GEMINI_API_KEY="your-key-here"
+
+# Start the server
+uvicorn pulserelay.backend.main:app --port 8000
+
+# Open http://localhost:8000
 ```
 
-Click buttons 1–6 to walk through the full scenario. Or press the mic button and speak naturally.
+Click **Play Demo** to walk through the full stroke emergency scenario with voice synthesis and medical device sounds. Or press the mic button and speak naturally.
+
+## Reproducing the Demo
+
+**Step 1 — Start the server**
+```bash
+pip install -r requirements.txt
+export GEMINI_API_KEY="your-key-here"
+uvicorn pulserelay.backend.main:app --port 8000
+```
+
+**Step 2 — Open the dashboard**
+Navigate to `http://localhost:8000` in Chrome or Safari.
+
+**Step 3 — Click Play Demo**
+This runs a deterministic 6-scene stroke emergency scenario:
+- Scene 1: Patient demographics + initial vitals (BP 188/96, HR 92)
+- Scene 2: Medication administered (Aspirin 325mg)
+- Scene 3: BP rises to 194/102, HR jumps to 108 → **agent detects change and alerts**
+- Scene 4: Incomplete pupil observation → agent asks for clarification
+- Scene 5: Full pupil data provided → agent logs and alerts
+- Scene 6: ETA given → handoff summary generated
+
+You will hear: continuous heart monitor beeping, voice synthesis reading the paramedic's words, and medical device alert tones when the agent detects changes.
+
+**Step 4 — Check the dashboard panels**
+- **Event Timeline**: All vitals, medications, and demographics with timestamps
+- **Active Alerts**: Agent-generated warnings (HR increased 16 bpm)
+- **Patient State**: Current BP, HR, pain, medications count
+- **Receiving Team tab**: Click to see the handoff summary
+
+**Step 5 — Run the tests**
+```bash
+python tests/test_core.py
+```
+All 17 tests should pass — covering extraction, trends, safety, and agent behavior.
+
+**Live version**: https://pulserelay-rhar.onrender.com (auto-deploys from GitHub)
 
 ## Built With
 
